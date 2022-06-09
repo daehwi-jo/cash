@@ -1,0 +1,38 @@
+﻿<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<body class="no_bg">
+
+<script type="text/javascript">
+	function enterup() {
+		if (window.event.keyCode == 13) {
+			darago();
+		}
+	}
+</script>
+
+<div class="fix_width">
+	<div class="login_tit">달아요 캐시 로그인</div>
+	<ul class="login_cont">
+		<form>
+		<li>아이디 (이메일)</li>
+		<li><input type="text" id="lid" /></li>
+		<li>
+			<!--<div class="mbotm15 red tit11">* 올바른 이메일을 입력하세요.</div>-->
+		</li>
+		<li>비밀번호</li>
+		<li><input type="password" id="lpwd"  onkeyup="enterup();" onkeydown="enterup" autocomplete="off"/></li>
+		<li>
+			<div class="mbotm15 red tit11"  >
+				<span id="span_err" style="display:none;"></span>
+			</div>
+			<div class="login_lost_pss">비밀번호 분실 문의</div>
+		</li>
+		</form>
+		<li><input type="button" value="로그인" class="btn_login" id="darago" onclick="darago();"/></li>
+		<li><input type="button" onclick="location.href='/parthner/p/join'" value="이메일 회원가입" class="btn_join" /></li>
+	</ul>
+</div>
+
+</body>
+</html>

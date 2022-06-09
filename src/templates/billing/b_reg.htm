@@ -1,0 +1,118 @@
+
+<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script defer src="[[.paple_js_url]]" ></script>
+<script>
+        function gobilling()
+        {
+            var pay_work = "PAY";
+            var payple_payer_id = "";
+            var buyer_no =  [[.userId]];
+            var buyer_name = [[.userNm]];
+            var buyer_hp =  [[.hpNo]];
+            var buyer_email =[[.email]];
+
+
+            var obj = new Object();
+
+
+            obj.PCD_CPAY_VER = "1.0.1"; // (필수) 결제창 버전
+            obj.PCD_PAY_TYPE = "card"; // (필수) 결제 수단
+            obj.PCD_PAY_WORK = pay_work; // (필수) 결제요청 업무구분 (AUTH : 본인인증+계좌등록, CERT: 본인인증+계좌등록+결제요청등록(최종 결제승인요청 필요), PAY: 본인인증+계좌등록+결제완료)
+            obj.PCD_PAYER_NO = buyer_no; // (선택) 가맹점 회원 고유번호 (결과전송 시 입력값 그대로 RETURN)
+            obj.PCD_PAYER_NAME = buyer_name; // (선택) 결제자 이름
+            obj.PCD_PAYER_HP = buyer_hp; // (선택) 결제자 휴대폰 번호
+            obj.PCD_PAYER_EMAIL = buyer_email; // (선택) 결제자 Email
+            obj.PCD_REGULER_FLAG = "Y"; // (선택) 정기결제 여부 (Y|N)
+            obj.PCD_USER_DEFINE1 = [[.userData]];
+            obj.PCD_PAY_TOTAL =[[.totalAmt]];
+            obj.PCD_PAY_GOODS =[[.itemNm]];
+            obj.PCD_PAY_ISTAX ="N";
+            obj.PCD_PAY_OID =[[.payOid]];
+            obj.PCD_PAY_YEAR =[[.payYear]];
+            obj.PCD_PAY_MONTH =[[.payMonth]];
+            obj.PCD_REGULER_FLAG ="Y";
+
+            obj.payple_auth_file = "/api/pay/billingAuth?work="+pay_work;
+            obj.PCD_RST_URL = "/api/pay/billingRegResult"; // (필수) 결제(요청)결과 RETURN URL
+            PaypleCpayAuthCheck(obj);
+            event.preventDefault();
+
+        }
+        function popConfirm(){
+            $(".trigger_guid").click();
+        }
+
+        function closePop(){
+            $(".close-button").click();
+            location.href="/parthner/p/guidePartner";
+        }
+
+
+
+</script>
+</head>
+
+<body onload="popConfirm();" >
+<table border="1" cellspacing="0" cellpadding="1"  style="display: none;">
+    <tr>
+        <td>구매자이름</td>
+        <td>userNm</td>
+    </tr>
+    <tr>
+        <td>구매자 휴대폰번호</td>
+        <td>hpNo</td>
+    </tr>
+    <tr>
+        <td>구매자 Email</td>
+        <td>email</td>
+    </tr>
+    <tr>
+        <td colspan="2" align="center">
+            <button id="payAction" class="btn_guid trigger_guid">등록하기</button>
+        </td>
+    </tr>
+</table>
+
+
+<!--// POPUP 파트너멤버쿠폰결제 -->
+<div class="modal">
+    <div class="modal-content modal-content-guid">
+        <div ></div>
+        <div class="mbotm20 tit13 bl">구독 결제</div>
+        <div class="mbotm10 tit12">결제를 진행하시겠습니까?
+            <br />등록하신 카드로 자동 결제가 진행 됩니다.
+        </div>
+        <div class="pall15">
+            <ul class="partner_cupon_box">
+                <li style="width: 54%;"><input type="button" style="width: 135px;" value="확인" onclick="gobilling();" class="btn_login"/></li>
+                <li><input type="button" value="취소" style="width: 135px;" onclick="closePop();" class="btn_cupon" /></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+
+
+</html>
+
+
+<script type="text/javascript">
+    var modal = document.querySelector(".modal");
+    var trigger = document.querySelector(".trigger_guid");
+    var cancel = document.querySelector(".btn-close");
+    function toggleModal() {
+        modal.classList.toggle("show-modal");
+    }
+    function windowOnClick(event) {
+        if (event.target === modal) {
+            toggleModal();
+        }
+    }
+    trigger.addEventListener("click", toggleModal);
+    //cancel.addEventListener("click", toggleModal);
+    window.addEventListener("click", windowOnClick);
+</script>

@@ -1,0 +1,125 @@
+﻿<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<body class="no_bg">
+
+<script type="text/javascript" >
+
+	window.addEventListener("load", function() {
+		if (sessionStorage.getItem('storeId')==null){
+			location.href="/parthner/p/login"
+		}
+		baseData();
+	});
+
+	//const nextGo=[[.nextGo]];
+
+	function  baseData() {
+
+		if (sessionStorage.getItem('storeId')==null){
+			return;
+		}
+
+		let sendData = {
+			storeId: sessionStorage.getItem('storeId'),
+			userId: sessionStorage.getItem('userId')
+		};
+		var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+		fetch('/parthner/a/home', opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+
+
+			if (res.resultCode == "00"){
+				 cMSG = res.resultData.cMSG;
+				 nextGo =  res.resultData.nextGo;
+				 introMsg = res.resultData.introMsg;
+
+				if (nextGo =="Y"){
+					location.href="/parthner/p/guidePartner";
+					return;
+				}
+
+				document.getElementById("cMSG").innerText=cMSG;
+				document.getElementById("introMsg").innerText=introMsg;
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+
+
+
+		});
+	};
+
+
+</script>
+
+<div class="fix_width">
+	<div class="pall20 tit15 bl" id="introMsg" ></div>
+
+	<div class="top_guid">
+		<div class="top_guid_tit">달아요 캐시</div>
+		<div class="top_guid_subtit">인증하기</div>
+		<div class="top_guid_txt">여신협회, 홈택스 아이디 인증으로<br />고객 매출 빅데이터 분석을 이용해 보세요.</div>
+	</div>
+	<div id="lnbtabs" class="c-tabs no-js">
+		<div class="c-tabs-nav">
+			<a href="#" class="c-tabs-nav__link is-active"><span>소개</span></a>
+			<a href="#" class="c-tabs-nav__link"><span>인증 후 사례</span></a>
+		</div>
+		<div class="c-tab is-active">
+			<div class="c-tab__content">
+				<ul class="guid_cont">
+					<li class="guid_cont_tit">여신협회 인증을 하시면 ...</li>
+					<li class="guid_cont_tit guid_icon1">무엇 ?</li>
+					<li>
+						달아요 캐시는 매출정보를 분석하여<br />
+						오늘 영업을 예측하여 고객이해를 돕습니다.<br />
+						맞춤형 영업을 준비하고 고객을 응대하면<br />
+						단골손님과 고정매출이 늘어납니다.
+					</li>
+					<li class="guid_cont_tit guid_icon2">어떻게 ?</li>
+					<li>
+						기업연결, 모바일 장부 사용은 즉시 가능합니다. <br />
+						(주변기업 연결문의: 달아요 고객 센터)<br /><br />
+						
+						아이디 인증 시 금융결제원과 함께 제공하는 <br />
+						빅데이터 매출분석 및 예측을 매일 받으시며,<br />
+						멤버십에 6개월간 무료로 가입됩니다.
+					</li>
+					<li class="guid_line"></li>
+					<li class="guid_cont_tit">
+						<div class="btn_guid" onclick="location.href='/parthner/p/joinStep2'" >여신협회/홈택스 인증하기</div>
+					</li>
+					<li>
+						<div class="mbotm30 vblue bl"  id="cMSG"></div>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="c-tab">
+			<div class="c-tab__content">
+				<div class="mbotm10 mleft30 dvblue agnl">* 이해를 돕기 위한 예시 화면 입니다.</div>
+				<div class="guid_eximg"><img src="/public/img/new_img/guid_eximg1.png" alt="인증 후 사례 예시 화면" /></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
+
+<script src="/public/js/lnbtabs.js"></script>
+<script>
+	var myTabs = lnbtabs({
+		el: '#lnbtabs',
+		tabNavigationLinks: '.c-tabs-nav__link',
+		tabContentContainers: '.c-tab'
+	});
+	
+	myTabs.init();
+</script>

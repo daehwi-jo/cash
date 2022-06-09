@@ -1,0 +1,874 @@
+
+<!--header"-->
+[[template "review_header" .]]
+<!--header"-->
+
+<style>
+
+    body {
+        background:#fcfcff;
+        background-image: url('/public/img/bg.svg');
+        background-size: cover;
+    }
+</style>
+<script type='text/javascript'>
+
+
+    window.addEventListener("load", function() {
+
+        reviewStoreSetting();
+
+        let sHeight=screen.availHeight-300;
+        //document.getElementById("rest_modal_h").style.maxHeight=sHeight+"px";
+       // document.getElementById("rest_modal_h2").style.maxHeight=sHeight+"px";
+        document.getElementById("post_modal").style.maxHeight=sHeight+"px";
+    });
+    let filterKeyword="";
+    let bYn="N";
+
+
+
+    function  reviewStoreSetting() {
+
+        let sendData = {
+            restId: [[.restId]],
+            storeId: [[.restId]],
+        };
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/getReviewSetting', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            //console.log(res)
+            if (res.resultCode == "00") {
+                document.getElementById("addr").value =  res.resultData.addr;
+                document.getElementById("addr2").value =  res.resultData.addr2;
+                document.getElementById("bizNum").value = res.resultData.bizNum;
+
+                if (isEmpty(res.resultData.baemin) == false && res.resultData.baemin !="n") {
+                    document.getElementById("bameniV").innerText = res.resultData.baemin.name;
+                }
+                if (isEmpty(res.resultData.naverInfo) == false && res.resultData.naverInfo !="n") {
+                    document.getElementById("naverV").innerText =  res.resultData.naverInfo.NAME;
+                }
+                if (isEmpty(res.resultData.yogiyoInfo) == false && res.resultData.yogiyoInfo !="n") {
+                    document.getElementById("yogiyoV").innerText = res.resultData.yogiyoInfo.NAME;
+                }
+                if (isEmpty(res.resultData.coupangInfo) == false && res.resultData.coupangInfo !="n") {
+                    document.getElementById("coupangV").innerText = res.resultData.coupangInfo.NAME;
+                }
+
+                if (res.resultData.billingInfo !=""){
+                   bYn="Y";
+                }
+                if (isEmpty(res.resultData.filterData) ==false){
+                    filterKeyword = res.resultData.filterData[0].keyword;
+                }
+
+                tagMaker();
+
+                if (isEmpty(res.resultData.filterData) ==false){
+                    ratingChk(res.resultData.filterData[0].rating);
+                }
+
+            }else if (res.resultCode == "01") {
+
+                document.getElementById("addr").value =  res.resultData.addr;
+                document.getElementById("addr2").value =  res.resultData.addr2;
+                return;
+            }else if (res.resultCode == "99"){
+                return;
+            }else{
+                alert("통신 오류");
+                return; ``
+            }
+        });
+    };
+
+
+    function  ratingChk(chkV) {
+        if (chkV !=""){
+            let chkStr = chkV.split(',');
+            for ( var i in chkStr ) {
+                document.getElementById('rating'+chkStr[i]).checked = true;
+            }
+        }
+
+    }
+
+
+    function  tagMaker() {
+        let keywordStr = filterKeyword.split('|');
+        let html =""
+        if(keywordStr[0] !="") {
+            for (var i in keywordStr) {
+               html +='<span class="m-1 border border-purple-500 rounded-lg px-4 font-bold text-lg leading-loose ">'+ keywordStr[i] + '<a href="javascript:tag_del(\'' + keywordStr[i] + '\');" class="ml-3 color1 text-lg">X</a>'
+               html +='</span>';
+            }
+        }
+        let kewordCnt=0;
+        if (filterKeyword.split('|')==""){
+            kewordCnt=0
+        }else{
+            kewordCnt=filterKeyword.split('|').length;
+        }
+        document.getElementById("tagList").innerHTML=html;
+        document.getElementById("kewordCnt").innerText= kewordCnt;
+    }
+
+    function tagUpdate(){
+
+        if (bYn=="N"){
+            openModal('partner-modal');
+            return;
+        }
+
+        let keywordLen= filterKeyword.split('|').length;
+        if (keywordLen >= 5){
+            alert("키워드는 최대 5개까지 입력 가능합니다.");
+            return;
+        }
+
+        let inputKeyword = document.getElementById("inputKeyword").value.replace(/\s+/g, '')
+
+        if (filterKeyword.indexOf(inputKeyword) !="-1" && inputKeyword !=""){
+            alert("같은 키워드가 이미 있습니다.");
+            document.getElementById("inputKeyword").value="";
+            return;
+        }
+
+
+        if (inputKeyword !=""){
+            if (filterKeyword==""){
+                filterKeyword = inputKeyword;
+            }else{
+                filterKeyword = filterKeyword+"|"+inputKeyword;
+            }
+        }
+
+
+
+        chkValue="";
+        var chkList = document.querySelectorAll("input[name=chkRating]:checked");
+        if (chkList.length >0){
+            chkList.forEach(function (ch) {
+                if (chkValue==""){
+                    chkValue=ch.value;
+                }else{
+                    chkValue=chkValue+","+ch.value;
+                }
+            });
+
+        }
+
+        let sendData = {
+            restId:  [[.restId]],
+            bizNum:  document.getElementById("bizNum").value,
+            keyword : filterKeyword,
+            rating : chkValue,
+        };
+        var opts = {method: 'PUT', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/keyword', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            //console.log(res)
+            if (res.resultCode == "00"){
+                document.getElementById("inputKeyword").value="";
+                tagMaker();
+            }else if (res.resultCode == "99"){
+
+            }else{
+                alert("통신 오류");
+                return;
+            }
+        });
+    }
+
+    function tag_del(str){
+        let keywordStr = filterKeyword.split('|');
+        let result =""
+        for ( var i in keywordStr ) {
+
+            if (keywordStr[i] != str){
+                if (result==""){
+                    result=keywordStr[i];
+                }else{
+                    result=result+"|"+keywordStr[i];
+                }
+            }
+        }
+        filterKeyword=result;
+        tagUpdate();
+
+    }
+
+    function inputKeywordEnter(){
+        if(event.keyCode == 13){
+            tagUpdate();
+            return;
+        }
+
+    }
+
+
+    function popPostOpen(){
+        openModal('post-modal');
+        $("#addr_p").hide();
+        $("#addr_p2").hide();
+        execDaumPostcode();
+        document.getElementById("paddr").value="";
+        document.getElementById("paddr2").value="";
+    }
+
+
+    function popRestOpen(type){
+
+        let html="";
+
+        html +='<tr class="relative transform scale-100text-xs py-1 border-b-2 border-gray-100 ">'
+        html +='    <td class="px-10 py-2  whitespace-no-wrap mt-10 items-center">'
+        html +='<div class="leading-5 text-xl text-gray-900 mb-1 mt-5"> ex) xx 치킨 , xx 분식</div>'
+        html +='</td>'
+        html +='</tr>'
+        document.getElementById("p_type").value = type;
+        document.getElementById("storeList").innerHTML = html;
+        openModal('rest-modal');
+    }
+
+    function  UpdateBaseData() {
+
+        let  paddr= document.getElementById("paddr").value;
+        let  paddr2= document.getElementById("paddr2").value;
+        if (paddr == ""){
+            alert("주소를 입력해주세요.");
+            return;
+        }
+        if (paddr2 == ""){
+            alert("상세주소를 입력해주세요.");
+            return;
+        }
+        let sendData = {
+            storeId: [[.restId]],
+            addr:      paddr,
+            addr2:     paddr2,
+            lat:     document.getElementById("lat").value,
+            lng:     document.getElementById("lng").value,
+            hCode:      document.getElementById("hCode").value,
+        };
+        var opts = {method: 'PUT', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/base', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            if (res.resultCode == "00"){
+                location.reload();
+            }else if (res.resultCode == "99"){
+                alert(res.resultMsg);
+                return;
+            }else{
+                alert("통신 오류");
+                return;
+            }
+        });
+    };
+
+
+    function  findStore() {
+
+        let type=document.getElementById("p_type").value;
+
+
+        let pop_keyword=document.getElementById("pop_keyword").value
+       // if (pop_keyword.length < 3) {
+       //     return;
+       // }
+        let sendData = {
+            type: type,
+            restId: [[.restId]],
+            keyword:pop_keyword,
+        };
+      //  console.log(sendData)
+
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/deliveryList', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+         //   console.log(res)
+            if (res.resultCode == "00") {
+                let html = "";
+
+                if (res.resultData.length > 0) {
+                    res.resultData.forEach(function(v) {
+
+                        if (v.name !=""){
+                            html += ' <tr class="relative transform scale-100text-xs py-1 border-b-2 border-gray-100">'
+                            html += '    <td class="px-10 py-2 whitespace-no-wrap">'
+                            html += '        <div class="leading-5 text-gray-500 font-medium text-xl ml-3 color3 mb-1">'
+                            html += '            <div class="inline-flex items-center justify-center absolute left-5 top-3 text-gray-400">'
+                            html += '                <img src="/public/img/delivery/store.png" class=""></div>'
+
+                            if (type=="baemin"){
+                                html += "    <div><a class=' text-xl' href='javascript:UpdateDeliverStore(\"baemin\",\""+v.baeminId+"\");'>"+ v.name +"</a></div>"
+                            }else if (type=="naver"){
+                                html += "    <div><a class=' text-xl' href='javascript:UpdateDeliverStore(\"naver\",\""+v.naverId+"\");'>"+ v.name +"</a></div>"
+                            }else if (type=="yogiyo"){
+                                html += "    <div><a class=' text-xl' href='javascript:UpdateDeliverStore(\"yogiyo\",\""+v.yogiyoId+"\");'>"+ v.name +"</a></div>"
+                            }else if (type=="coupang"){
+                                html += "    <div><a class=' text-xl' href='javascript:UpdateDeliverStore(\"coupang\",\""+v.coupangId+"\");'>"+ v.name +"</a></div>"
+                            }
+
+                            html += '        <div class="leading-5 text-gray-400 mb-1">' + v.addr + '</div>'
+                            html += '        <div class="leading-5 text-gray-800 mb-1">'+ v.category +'</div>'
+                            html += '    </td>'
+                            html += '</tr>'
+
+                        }
+                    });
+                }else{
+                    html += "<tr><td class='text-xl items-center' align='center'>검색 결과가 없습니다.</td></tr>";
+                }
+                document.getElementById("storeList").innerHTML = html;
+            }else if (res.resultCode == "01") {
+                let html = "<tr><td class='text-xl items-center' align='center'>설정된 배달 없체가 없습니다.</td> </tr>"
+                document.getElementById("storeList").innerHTML=html;
+                return;
+            }else if (res.resultCode == "99"){
+                let html ="<tr class='relative transform scale-100text-xs py-1 border-b-2 border-gray-100'><td class='text-xl items-center' align='center'>연결된 장부가 없습니다.</td> </tr>"
+                document.getElementById("storeList").innerHTML=html;
+                return;
+            }else{
+                alert("통신 오류");
+                return; ``
+            }
+        });
+    };
+
+
+    function  UpdateDeliverStore(type,oid) {
+        let c_msg=""
+        let baeminId="";
+        let naverId="";
+        let yogiyoId="";
+        let coupangId="";
+
+        if (type=="baemin"){
+            baeminId =oid;
+            c_msg="배민 설정을 변경하시겠습니까?";
+        }else if (type=="naver"){
+            naverId =oid;
+            c_msg="네이버 설정을 변경하시겠습니까?";
+        }else if (type=="yogiyo"){
+            yogiyoId =oid;
+            c_msg="요기요 설정을 변경하시겠습니까?";
+        }else if (type=="coupang"){
+            coupangId =oid;
+            c_msg="쿠팡 설정을 변경하시겠습니까?";
+        }else{
+            alert("잘못된 설정입니다.")
+            return;
+        }
+
+        if (!confirm(c_msg)) {
+            return;
+        }
+
+        let sendData = {
+            restId: [[.restId]],
+            type:  type,
+            baeminId :baeminId,
+            naverId :naverId,
+            yogiyoId :yogiyoId,
+            coupangId :coupangId,
+        };
+        var opts = {method: 'PUT', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/matching', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            if (res.resultCode == "00"){
+                location.reload();
+            }else if (res.resultCode == "99"){
+                alert(res.resultMsg);
+                return;
+            }else{
+                alert("통신 오류");
+                return;
+            }
+        });
+    };
+
+    function goMembership(){
+        location.href="https://partner.darayo.com/store/storeInfo/membership"
+    }
+
+    function returnApp()
+    {
+        if(/Android/i.test(navigator.userAgent)) {
+            window.AndroidBridge.sendMessage("00");
+        } else if(/iPhone|iPad/i.test(navigator.userAgent)) {
+            var message = {'resultCode': '00'};
+            webkit.messageHandlers.callbackHandler.postMessage(message);
+        } else {
+            window.AndroidBridge.sendMessage("00");
+        }
+    }
+
+    function  kakaoapi_xy(paddr) {
+        //XMLHttpRequest 객체 생성
+        let xhr = new XMLHttpRequest();
+        //요청을 보낼 방식, 주소, 비동기여부 설정
+        xhr.open('GET', 'https://dapi.kakao.com/v2/local/search/address.json?query='+encodeURIComponent(paddr)+'&analyze_type=exact', true);
+        //HTTP 요청 헤더 설정
+        xhr.setRequestHeader('Authorization', 'KakaoAK c2bc6457eaaf39999ed317da290848ea');
+        //요청 전송
+        xhr.responseType='json';
+        xhr.send();
+        //통신후 작업
+        xhr.onload = function () {
+            //통신 성공
+            if (xhr.status == 200) {
+                document.getElementById("hCode").value  = xhr.response.documents[0].address.h_code;
+                document.getElementById("lng").value  = xhr.response.documents[0].address.x;
+                document.getElementById("lat").value = xhr.response.documents[0].address.y;
+            } else {
+                console.log(xhr)
+                alert("통신 오류");
+                return;
+            }
+        }
+    }
+
+</script>
+
+    <main>
+
+        <div class="w-full">
+
+            <div class="w-full mx-5 py-6">
+                <h2 class="text-left text-xl font-bold color1">
+                    매장주소
+                </h2>
+                <p class="mt-2 text-left color2 text-lg">
+                    * 내 매장의 리뷰를 분석하기 위해 정확한 주소가 필요합니다.
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <input type="hidden" id="bizNum">
+                <input type="text" id="addr" onclick="popPostOpen();" readonly class="text-xl mx-5 font-bold color3 border border-gray-200   rounded-xl block p-3 w-11/12" placeholder="" required="">
+            </div>
+            <div class="mb-3">
+                <input type="text" id="addr2" onclick="popPostOpen();" readonly class="text-xl mx-5 font-bold color3  border border-gray-200  rounded-xl block p-3 w-11/12 placeholder-gray-400 placeholder-opacity-50" placeholder="상세 주소 입력" required="">
+            </div>
+            <div class="w-full mx-5 mt-8">
+                <h2 class="text-left text-xl font-bold color1">
+                    리뷰 분석 대상 매장
+                </h2>
+
+                <div class="grid grid-cols-7 items-center mt-4" >
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/baemin.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold" id="bameniV">미등록</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 text-xl " onclick="popRestOpen('baemin');">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3" >
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/yogiyo.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold" id="yogiyoV">미등록</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center justify-between">
+                            <span class="finline-block color4 text-xl " onclick="popRestOpen('yogiyo');">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3" >
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/coupang.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold" id="coupangV" >미등록</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center   justify-between">
+                            <span class="finline-block color4 text-xl " onclick="popRestOpen('coupang');">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3" >
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/naver.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold" id="naverV">미등록</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 text-xl " onclick="popRestOpen('naver');">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="w-full mx-5 py-6 mt-8">
+                <p class="text-left text-lg color2">
+                    * 설정한 별점, 키워드가 포함된 관심리뷰를 알려드려요.
+                </p>
+                <p class="px-3 text-left font-bold text-xl color2">
+                    (파트너 전용)
+                </p>
+                <h2 class="text-left text-xl font-bold color1 mt-5">
+                    관심 별점
+                </h2>
+                <div class="block pt-3 space-x-4">
+                    <div class="flex place-items-center">
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-gray-500">
+                                <input type="checkbox" id="rating1" name="chkRating" class="opacity-0 absolute" onchange="tagUpdate();" value="1">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-lg items-center mr-4">1개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-gray-500">
+                                <input type="checkbox" id="rating2" name="chkRating" class="opacity-0 absolute" onchange="tagUpdate();" value="2">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-lg items-center mr-4">2개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-gray-500">
+                                <input type="checkbox" id="rating3" name="chkRating" class="opacity-0 absolute" onchange="tagUpdate();" value="3">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-lg items-center mr-4">3개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-gray-500">
+                                <input type="checkbox" id="rating4" name="chkRating" class="opacity-0 absolute" onchange="tagUpdate();" value="4">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-lg items-center mr-4">4개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-gray-500">
+                                <input type="checkbox" id="rating5" name="chkRating" class="opacity-0 absolute" onchange="tagUpdate();" value="5">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-lg items-center mr-4">5개</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full mx-5 py-6">
+                <h2 class="text-left text-xl font-bold color1">
+                    관심 키워드 <span class="text-left text-xl font-bold color2" id="kewordCnt"> 0 </span> / 5
+                </h2>
+
+                <div class="grid grid-cols-7 items-center mt-3">
+                    <div class="col-span-5 self-center mr-3">
+                        <input type="text" onkeydown="inputKeywordEnter(); return;"  id="inputKeyword" class="text-xl font-bold color3 border border-gray-200  sm:text-sm rounded-xl block w-full p-3 placeholder-gray-400 placeholder-opacity-50" placeholder="키워드 입력 (ex: 맛있어요)" required="">
+                    </div>
+
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 ">
+                                <button onclick="tagUpdate();" class="p-3 pl-8 pr-8 text-xl bg-transparent border-2 border-purple-500 color1 text-xl rounded-2xl hover:bg-purple-500 hover:text-gray-100 focus:border-4 focus:border-purple-300">등록</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class='my-3 flex flex-wrap -m-1' id="tagList">
+                </div>
+
+            </div>
+
+            <div class="w-full mx-5 py-6">
+                <button class="p-5 w-11/12 bg-purple-600 text-gray-50 text-2xl rounded-full " onclick="returnApp();">확인</button>
+            </div>
+
+
+        </div>
+
+        <div class="partner-modal fixed w-full inset-0 z-50   overflow-hidden flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+            <div class="shadow-lg modal-container bg-white w-11/12 shadow-lg z-50 overflow-hidden  rounded-2xl h-3/5" style="height: 500px;">
+                <div class="flex flex-row justify-between p-6   border-b border-gray-200 rounded-tl-lg rounded-tr-lg ">
+                    <div class="flex w-full  items-center text-xl font-bold color3">
+                        파트너 멤버십을 구독해 보세요!
+                    </div>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" onclick="modalClose('partner-modal')">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <div class="flex flex-col  bg-gray ">
+                    <div class="flex flex-col  ">
+                        <div class="relative">
+                            <div class="flex flex-col mt-3 mb-3">
+                                <span class="text-lg color3 ml-3 mb-2 mr-3"><span class="text-lg font-bold color3">파트너 멤버</span>가 되시면</span>
+                                <span class="text-lg color3 font-bold color3  ml-3 mr-3 mb-2"> 1.알림톡으로 쉽게 확인 가능</span>
+                                <span class="text-lg color3  ml-3 mr-3 mb-2">- 매일 아침 어제매출, 입금내역, 관심 리뷰, 부정 취소 의심건을 알려드립니다.</span>
+                                <span class="text-lg color3  ml-3 mr-3 mb-2">- 주간(일요일) / 월간(매월 1일) 분석 자료를 사장님께 정리해서 알려드립니다.</span>
+                                <span class="text-lg color3 font-bold color3  ml-3 mr-3 mb-2"> 2. 관심 리뷰 설정 및 작성자 분석, 키워드 보기</span>
+                                <span class="text-lg color3  ml-3 mr-3 mb-2">-관심 별점, 관심 키워드를 설정하여 관심 리뷰를 보고 받고, 작성자 성향과 대응책도 분석해 보세요.</span>
+                                <span class="text-lg color3  ml-3 mr-3 mb-2">-모든 리뷰를 분석해서 고객의 생각을 한 눈에 확인하고 영업 방향, 주력 메뉴등을 설정해보세요.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full mx-5 py-6">
+                        <button class="p-5 w-11/12 bg-purple-600 text-gray-50 text-2xl rounded-full " onclick="goMembership()">파트너 구독하기</button>
+                    </div>
+
+                    <div class="w-full  overflow-auto shadow bg-white" style="max-height: 445px;">
+
+                    </div>
+
+                </div>
+
+
+
+
+            </div>
+        </div>
+
+        <div class="post-modal fixed w-full inset-0 z-50   overflow-hidden flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+            <div class="shadow-lg modal-container bg-white w-11/12 shadow-lg z-50 ">
+                        <div class="flex flex-row justify-between p-6 bg-white border-b border-gray-200 rounded-tl-lg rounded-tr-lg">
+                            <div class="flex w-full justify-center items-center text-2xl font-bold color3">
+                               주소 검색
+                            </div>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" onclick="modalClose('post-modal')">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <div class="flex flex-col  bg-gray-50 overflow-y-auto" id="post_modal" >
+                            <form>
+                                <input type="hidden" id="hCode" >
+                                <input type="hidden" id="lng" >
+                                <input type="hidden" id="lat" >
+                                <div id="wrap" style="max-width: 557px; width: 100%; height:300px;margin:5px 0;position:relative">
+                                </div>
+                                <div class="form-group px-6 " id="addr_p" style="display: none;">
+                                    <p class="mb-2 font-semibold text-gray-700">주소</p>
+                                    <input type="text" id="paddr" readonly class="text-xl mx-5 border border-gray-200   block p-2 w-11/12">
+                                </div>
+                                <div class="form-group px-6 mb-3" id="addr_p2" style="display: none;">
+                                    <p class="mb-2 mt-3 font-semibold text-gray-700">상세주소</p>
+                                    <input type="text" id="paddr2"  class="text-xl mx-5  border border-gray-200  block p-2 w-11/12 placeholder-gray-400 placeholder-opacity-50" placeholder="상세 주소 입력">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="flex flex-row items-center justify-between p-5 bg-white border-t border-gray-200 rounded-bl-lg rounded-br-lg">
+                            <button class="p-3 pl-14 pr-14 bg-white border border-gray-500  text-lg rounded-full" onclick="modalClose('post-modal')">
+                                취소
+                            </button>
+
+                            <button class="p-3 pl-14 pr-14 bg-purple-600 text-gray-50 text-lg rounded-full" onclick="UpdateBaseData();">
+                                저장
+                            </button>
+                        </div>
+
+
+
+            </div>
+        </div>
+
+
+        <div class="rest-modal fixed w-full inset-0 z-50   overflow-hidden flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+            <div class="shadow-lg modal-container bg-white w-11/12 shadow-lg z-50 overflow-hidden  rounded-2xl" style="height: 500px;" id="rest_modal_h">
+                <div class="flex flex-row justify-between p-6   border-b border-gray-200 rounded-tl-lg rounded-tr-lg ">
+                    <div class="flex w-full justify-center items-center text-2xl font-bold color3">
+                        매장검색
+                    </div>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" onclick="modalClose('rest-modal')">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <div class="flex flex-col  bg-gray ">
+                        <input type="hidden" id="p_type">
+                        <div class="flex flex-col">
+                            <div class="relative">
+                                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                                    <img src="/public/img/delivery/search-input-icon.png">
+                                </div>
+                                <input id="pop_keyword" type="text" name="pop_keyword" onkeypress="findStore();" style="border-bottom: 1px solid; border-bottom-color: gray;"  class="text-xl placeholder-gray-500 pl-10  w-full py-3 focus:outline-none focus:border-gray-400" placeholder="매장명을 검색해주세요" />
+                            </div>
+                        </div>
+                    <form>
+                        <div class="w-full overflow-auto shadow bg-white" style="max-height: 480px;" id="rest_modal_h2">
+                            <table class="w-full">
+                                <tbody id="storeList">
+                                <tr class="relative transform scale-100text-xs py-1 border-b-2 border-gray-100 ">
+                                    <td class="px-10 py-2  whitespace-no-wrap mt-10 items-center">
+                                        <div class="leading-5 text-xl text-gray-900 mb-1 mt-5"> ex) xx 치킨 , xx 분식</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+
+
+                    </form>
+                </div>
+
+
+
+
+            </div>
+        </div>
+
+    </main>
+
+<style>
+    .animated {
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+    }
+
+    .animated.faster {
+        -webkit-animation-duration: 500ms;
+        animation-duration: 500ms;
+    }
+
+    .fadeIn {
+        -webkit-animation-name: fadeIn;
+        animation-name: fadeIn;
+    }
+
+    .fadeOut {
+        -webkit-animation-name: fadeOut;
+        animation-name: fadeOut;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0;
+        }
+    }
+</style>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    var element_wrap = document.getElementById('wrap');
+    function sfoldDaumPostcode() {
+        element_wrap.style.display = 'none';
+    }
+
+
+
+    function execDaumPostcode() {
+        // 현재 scroll 위치를 저장해놓는다.
+        var currentScroll = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
+        new daum.Postcode({
+            oncomplete: function(data) {
+                var addr = ''; // 주소 변수
+                var extraAddr = ''; // 참고항목 변수
+                if (data.userSelectedType === 'R') { // 사용자가 도로명 주소를 선택했을 경우
+                    addr = data.roadAddress;
+                } else { // 사용자가 지번 주소를 선택했을 경우(J)
+                    addr = data.jibunAddress;
+                }
+                if(data.userSelectedType === 'R'){
+                    if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                        extraAddr += data.bname;
+                    }
+                    if(data.buildingName !== '' && data.apartment === 'Y'){
+                        extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                    }
+                    if(extraAddr !== ''){
+                        extraAddr = ' (' + extraAddr + ')';
+                    }
+                    document.getElementById("paddr").value = extraAddr;
+
+                } else {
+                    document.getElementById("paddr").value = '';
+                }
+
+
+                // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                document.getElementById("paddr").value = addr;
+                // 커서를 상세주소 필드로 이동한다.
+                document.getElementById("paddr2").focus();
+                element_wrap.style.display = 'none';
+                document.body.scrollTop = currentScroll;
+                $("#addr_p").show();
+                $("#addr_p2").show();
+
+
+                kakaoapi_xy(addr);
+            },
+            onresize : function(size) {
+                element_wrap.style.height = size.height+'px';
+            },
+            width : '100%',
+            height : '100%'
+        }).embed(element_wrap);
+        element_wrap.style.display = 'block';
+    }
+</script>
+
+
+<script>
+    all_modals = ['post-modal', 'rest-modal','partner-modal']
+    all_modals.forEach((modal)=>{
+        const modalSelected = document.querySelector('.'+modal);
+        modalSelected.classList.remove('fadeIn');
+        modalSelected.classList.add('fadeOut');
+        modalSelected.style.display = 'none';
+    })
+    const modalClose = (modal) => {
+      //  $("html, body").removeClass("not_scroll");
+        const modalToClose = document.querySelector('.'+modal);
+        modalToClose.classList.remove('fadeIn');
+        modalToClose.classList.add('fadeOut');
+        setTimeout(() => {
+            modalToClose.style.display = 'none';
+        }, 500);
+    }
+
+    const openModal = (modal) => {
+
+      //  $("html, body").addClass("not_scroll");
+        const modalToOpen = document.querySelector('.'+modal);
+        modalToOpen.classList.remove('fadeOut');
+        modalToOpen.classList.add('fadeIn');
+        modalToOpen.style.display = 'flex';
+    }
+
+</script>
+
+
+    [[template "review_footer" .]]

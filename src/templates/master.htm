@@ -1,0 +1,124 @@
+[[define "header"]]
+
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0" />
+	<meta name="format-detection" content="telephone=no" />
+	<title>BIG DATA</title>
+	<link rel="shortcut icon" href="/public/img/favicon_2.png">
+	<link rel="icon" href="/public/img/favicon_2.png">
+	<link rel="stylesheet" href="/public/css/style_base.css?1" type="text/css"><!--공통 CSS-->
+	<link rel="stylesheet" href="/public/css/style_cont.css?1" type="text/css"><!--컨텐츠 CSS-->
+	<script type="text/javascript" src="/public/js/jquery-2.0.0.min.js"></script><!--공통 JS-->
+	<script type="text/javascript" src="/public/js/loader.js"></script><!--구글차트 JS-->
+	<script type="text/javascript" src="/public/js/darayo.js"></script><!--공통-->
+</head>
+
+
+[[end]]
+
+
+[[define "header_pos"]]
+
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0" />
+	<meta name="format-detection" content="telephone=no" />
+	<title>달아요 파트너</title>
+	<link rel="shortcut icon" href="/public/img/favicon_2.png">
+	<link rel="icon" href="/public/img/favicon_2.png">
+	<link rel="stylesheet" href="/public/css/style_base2.css" type="text/css"><!--공통 CSS-->
+	<link rel="stylesheet" href="/public/css/style_cont2.css" type="text/css"><!--컨텐츠 CSS-->
+	<script type="text/javascript" src="/public/js/jquery-2.0.0.min.js"></script><!--공통 JS-->
+	<script type="text/javascript" src="/public/js/loader.js"></script><!--구글차트 JS-->
+	<script type="text/javascript" src="/public/js/darayo.js"></script><!--공통-->
+</head>
+
+[[end]]
+
+
+
+[[define "review_header"]]
+
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+	<link href="/public/css/font_style.css" rel="stylesheet">
+	<link href="/public/css/tw.css" rel="stylesheet">
+	<link href="/public/css/rw.css" rel="stylesheet">
+	<script type="text/javascript" src="/public/js/jquery-2.0.0.min.js"></script><!--공통 JS-->
+	<!-- ... -->
+</head>
+
+
+<script>
+
+	window.addEventListener("load", function() {
+		document.body.classList.add("reveal");
+	});
+
+	function dateFormat(date) {
+		let month = date.getMonth() + 1;
+		let day = date.getDate();
+		let hour = date.getHours();
+		let minute = date.getMinutes();
+		let second = date.getSeconds();
+
+		month = month >= 10 ? month : '0' + month;
+		day = day >= 10 ? day : '0' + day;
+		hour = hour >= 10 ? hour : '0' + hour;
+		minute = minute >= 10 ? minute : '0' + minute;
+		second = second >= 10 ? second : '0' + second;
+
+		return date.getFullYear() + '-' + month + '-' + day;
+	}
+
+	function isEmptyArr(arr)  {
+		if(Array.isArray(arr) && arr.length === 0)  {
+			return true;
+		}
+		return false;
+	}
+
+	function isEmpty(str){
+
+		if(typeof str == "undefined" || str == null || str == "")
+			return true;
+		else
+			return false ;
+	}
+	function LoadingBar(s){
+		if (s=="on"){
+			document.getElementById("loadingBar").style="";
+		}else{
+			document.getElementById("loadingBar").style="display:none;";
+		}
+
+	}
+
+</script>
+
+<body>
+<div class="min-h-full">
+
+	<div id="loadingBar" style="display:none;" wire:loading class="fixed top-0 left-0 right-0 bottom-0 w-full h-screen z-50 overflow-hidden flex flex-col items-center justify-center">
+		<div class="loader ease-linear rounded-full border-4 border-t-3 border-gray-100 h-10 w-10 mb-4"></div>
+	</div>
+
+	[[end]]
+
+[[define "review_footer"]]
+
+</div>
+</body>
+</html>
+
+[[end ]]

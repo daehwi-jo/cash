@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'NanumSquare';
+    src: url(../fonts/NanumSquareR.ttf);
+}
+
+@font-face {
+    font-family: 'NanumSquareB';
+    src: url(../fonts/NanumSquareB.ttf);
+}
+body,table,table th,table td,input,textarea,button,select,option,div,span,li,pre,a { font-family:NanumSquare, 나눔스퀘어, nanumgothic,나눔고딕,맑은 고딕,dotum,돋움,gulim,굴림,verdana,sans-serif; font-size:10pt; line-height:140%; !important}
+
+

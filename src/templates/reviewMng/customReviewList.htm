@@ -1,0 +1,580 @@
+
+<!--header"-->
+[[template "review_header" .]]
+<!--header"-->
+<style>
+    [type="date"] {
+        background:#fff url(/public/img/delivery/log-search-cal-icon.png)  97% 50% no-repeat ;
+    }
+    [type="date"]::-webkit-inner-spin-button {
+        display: none;
+    }
+    [type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0;
+    }
+    html, body, #resultList {
+        height: 100%;
+        overflow: auto;
+    }
+</style>
+<script type='text/javascript'>
+
+    window.addEventListener("load", function() {
+
+        let currentDate = new Date();
+        $("#endDate").val(dateFormat(currentDate));
+        let startDate = new Date(currentDate.setDate(currentDate.getDate() - 30));
+        $("#startDate").val(dateFormat(startDate));
+
+
+        //  let currentDate = new Date();
+        //  let endDate =currentDate;
+        // $("#endDate").datepicker("setDate",endDate);
+        //  let startDate = new Date(currentDate.setDate(currentDate.getDate() - 20));
+        //  $("#startDate").datepicker("setDate",startDate);
+
+        getReviewList(1);
+    });
+    let bYn="N";
+
+    function goMembership(){
+        location.href="https://partner.darayo.com/store/storeInfo/membership"
+    }
+
+    function inputKeywordEnter(){
+        if(event.keyCode == 13){
+            // tagUpdate();
+            return;
+        }
+
+    }
+
+    function  getReviewList(pageNo) {
+        let sendData = {
+            restId: [[.restId]],
+            dType:$("#d_type option:selected").val(),
+            rating:$("#rating option:selected").val(),
+            startDt: $("#startDate").val().replaceAll("-",""),
+            endDt: $("#endDate").val().replaceAll("-","")
+        };
+        LoadingBar("on");
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/customReviewList', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            let html="";
+            //  console.log(res)
+
+            if (res.resultCode == "00"){
+
+
+                if (res.billingInfo ==""){
+
+                    openModal('partner-modal');
+                    LoadingBar("off");
+                    return;
+                }
+                if (res.resultCnt > 0) {
+                    res.resultList.forEach(function(v) {
+                        let imgUrl="";
+                        let m_imgUrl="";
+
+                        if (v.type=="n"){
+                            imgUrl="naver.png";
+                        }else if(v.type=="b"){
+                            imgUrl="baemin.png";
+                        }else if(v.type=="y"){
+                            imgUrl="yogiyo.png";
+                        }else if(v.type=="cp"){
+                            imgUrl="coupang.png";
+                        }
+                        html +='<li class="border-b mt-3">';
+                        html +='    <div class="grid grid-cols-9 ">';
+                        html +='        <div class="col-span-1 self-center items-center">';
+                        html +='            <img src="/public/img/delivery/'+imgUrl+'" class="w-full h-12 w-12  object-contain ">';
+                        html +='       </div>';
+                        html +='        <div class="flex flex-col col-span-3 px-2 pt-2">';
+                        html +='           <span class="text-md font-bold">'+v.user+'</span>';
+                        let rating="";
+                        if (v.rating=="5"){
+                            rating ='<div class="flex items-center mt-1"><img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png">'
+                            rating +='<img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png"></div>'
+                        }else if(v.rating=="4"){
+                            rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">'
+                            rating +='<img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                        }else if(v.rating=="3"){
+                            rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                                '<img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                        }else if(v.rating=="2"){
+                            rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                                '<img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                        }else{
+                            rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                                '<img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                        }
+                        html +='            <span class="text-lg inline-block">'+rating+'</span>';
+                        html +='        </div>';
+                        html +='       <div class="flex flex-col col-span-2 pt-2">';
+
+                        if (v.visitCount > 1) {
+                            html +='           <span>';
+                            html +='               <img src="/public/img/delivery/revisit.png" style="width: 45px; height: 14px;" class="w-full">';
+                            html +='           </span>';
+
+                            if (v.type=="b") {
+                                html += '          <span class="text-sm inline-block pt-3">' + v.date + '</span>';
+                            }else{
+                                html +='       <span class="text-sm inline-block pt-7">'+v.date+'</span>';
+                            }
+                        }else{
+                            html += '<span class="text-sm inline-block pt-7">' + v.date + '</span>';
+                        }
+
+                        html +='       </div>';
+                        html +='        <div class="col-span-3 pt-3 pl-5">';
+                        html +='            <div class="flex items-center text-sm justify-between">';
+                        if (v.type=="b") {
+                            html += "               <span class='font-semibold inline-block ' onclick='popUserOpen(\""+v.memberNo +"\");'>사용자분석 ></span>"
+                        }
+                        html +='            </div>';
+                        html +='        </div>';
+                        html +='    </div>';
+                        html +='    <div class="grid grid-cols-9 gap-2 mt-3">';
+                        html +='       <div class="col-span-9 self-center mb-3">';
+
+                        let keywordStr = res.filterData[0].keyword.split('|');
+                        if(keywordStr[0].length !=0) {
+
+                            let h_review=v.content;
+                            for (var k in keywordStr) {
+                                let findKeyword = keywordStr[k]
+                                let regex = new RegExp(findKeyword, 'gi')
+                                if (v.content.indexOf(findKeyword)>=0){
+                                    h_review = h_review.replace(regex, "<span class='' style='color: #ffffff;; background-color: #ffa12d; padding: 1px 3px 1px 3px; '>" + findKeyword + "</span>");
+                                }
+                             }
+                            html +='           <span class="text-md color3 font-semibold">'+h_review+'</span>';
+                        }else{
+
+                            html +='           <span class="text-md color3 font-semibold">'+v.content+'</span>';
+                        }
+
+                        html +='       </div>';
+                        html +='   </div>';
+                        html +='    <div class="grid grid-cols-9 gap-2 mb-5 ">';
+                        html +='       <div class="col-span-9 self-center">';
+                        html +='           <span class="text-sm text-gray-400 inline-block">'+v.menuNM+'</span>';
+                        html +='       </div>';
+                        html +='   </div>';
+                        html +='</li>';
+                    });
+                }else{
+                    html +="<tr class='alert' role='alert'>";
+                    html +="<td align='center' colspan='4'>리뷰 데이터가 없습니다.</td>";
+                    html +="</tr>";
+                }
+                document.getElementById("resultList").innerHTML=html;
+
+                document.getElementById("rating").innerHTML=res.filterData[0].rating;
+                document.getElementById("keyword").innerHTML=res.filterData[0].keyword.replaceAll("|",",");
+                LoadingBar("off");
+
+            }else if (res.resultCode == "01"){
+
+                html +="<tr class='alert' role='alert'>";
+                html +="<td align='center' colspan='5'>리뷰 데이터가 없습니다.</td>";
+                html +="</tr>";
+                document.getElementById("resultList").innerHTML=html;
+                LoadingBar("off");
+
+            }else if (res.resultCode == "99"){
+                alert(res.resultMsg);
+                LoadingBar("off");
+                return;
+            }else{
+                alert("통신 오류");
+                LoadingBar("off");
+                return;
+            }
+        });
+    };
+
+
+
+    function popUserOpen(memberNo){
+
+        document.getElementById('otherComment').checked=false;
+        let html="";
+        html +='<li class="">'
+        html +='    <div class="grid grid-cols-4">'
+        html +='        <div class="flex flex-col col-span-4 px-10 pt-2 mb-3 overflow-hidden">'
+        html +='            <div class="flex justify-center items-center">'
+     //   html +='             <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>'
+        html +='            </div>'
+        html +='       </div>'
+        html +='   </div>'
+        html +=' </li>'
+        document.getElementById("commetList").innerHTML=html;
+        document.getElementById("memberName").innerText="";
+        document.getElementById("memberReviewCnt").innerText="0";
+        document.getElementById("memberReviewRatingAvg").innerText="0";
+
+        openModal('user-modal');
+        getCommentList(memberNo);
+    }
+
+
+    function  getCommentList(memberNo) {
+
+        let sendData = {
+            memberNo: memberNo,
+        };
+        LoadingBar("on");
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/writer', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            let html="";
+            //  console.log(res)
+
+            if (res.resultCode == "00"){
+                res.resultData.reviews.forEach(function(v) {
+                    html +=' <li class="border-b">'
+                    html +='    <div class="grid grid-cols-4">'
+                    html +='        <div class="flex flex-col col-span-4 px-1 pt-2">'
+                    html +='            <span class="text-md font-bold">'+v.shopName+'</span>'
+                    html +='        </div>'
+                    html +='    </div>'
+                    html +='    <div class="grid grid-cols-4">'
+                    html +='        <div class="col-span-4 self-center px-1">'
+                    let rating="";
+                    if (v.rating=="5"){
+                        rating ='<div class="flex items-center mt-1"><img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png">'
+                        rating +='<img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px" src="/public/img/delivery/star-01.png"></div>'
+                    }else if(v.rating=="4"){
+                        rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">'
+                        rating +='<img class="p-px" src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                    }else if(v.rating=="3"){
+                        rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                            '<img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                    }else if(v.rating=="2"){
+                        rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                            '<img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                    }else{
+                        rating ='<div class="flex items-center mt-1"><img class="p-px"  src="/public/img/delivery/star-01.png">' +
+                            '<img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"><img class="p-px"  src="/public/img/delivery/star-03.png"></div>'
+                    }
+                    html +='            <span class="text-md  font-semibold">'+rating+'</span>'
+                    html +='            <span class="text-sm text-gray-400 inline-block">'+v.date+'</span>'
+                    html +='        </div>'
+                    html +='    </div>'
+                    html +='   <div class="grid grid-cols-4 mt-3">'
+                    html +='        <div class="col-span-4 self-center mb-2 px-1">'
+                    html +='            <p class="text-md color3 font-semibold whitespace-normal">'+v.review+'</p>'
+                    html +='       </div>'
+                    html +='    </div>'
+                    html +='    <div class="grid grid-cols-4 mb-2 px-1">'
+                    html +='        <div class="col-span-4 self-center">'
+                    html +='            <span class="text-sm text-gray-400 inline-block">'+v.menu+'</span>'
+                    html +='        </div>'
+                    html +='    </div>'
+                    if (v.commentYn=="y" && isEmpty(v.commentReview)==false) {
+                        html += '    <div class="grid grid-cols-4 commentBox" style="display: none;">'
+                        html += '        <div class="col-span-4 px-3 pb-4 pt-8 mt-2 mb-4 " style="background-image: url(\'/public/img/delivery/box-ceo.png\');background-size: cover;">'
+                        html += '            <span class="text-md color3 font-semibold ">' + v.commentReview + '</span>'
+                        html += '        </div>'
+                        html += '    </div>'
+                    }
+                    html +='</li>'
+                });
+                document.getElementById("commetList").innerHTML=html;
+                document.getElementById("memberName").innerText=res.resultData.name;
+                document.getElementById("memberReviewCnt").innerText=res.resultData.reviewCnt;
+                document.getElementById("memberReviewRatingAvg").innerText=res.resultData.reviewRatingAvg;
+                LoadingBar("off");
+
+            }else if (res.resultCode == "99"){
+                LoadingBar("off");
+                //  document.getElementById("memberCommentList").innerHTML="리뷰데이터가 없습니다.";
+                // alert(res.resul   tMsg);
+                return;
+            }else{
+                //alert("통신 오류");
+                LoadingBar("off");
+                return;
+            }
+        });
+    };
+
+
+    function DateFormatter(num){
+        if(!num) return "";
+        var formatNum = '';
+        num=num.replace(/\s/gi, "");
+        try{
+            if(num.length == 8) {
+                formatNum = num.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+            }
+        } catch(e) {
+            formatNum = num;
+            //console.log(e);
+        }
+        return formatNum;
+    }
+
+
+    function commentRoad(){
+
+        if($("#otherComment").is(":checked") == true){
+            // $(".commentN").hide();
+            $(".commentBox").show();
+        }else{
+            // $(".commentN").show();
+            $(".commentBox").hide();
+        }
+    }
+
+
+</script>
+
+<main class="mb-5">
+
+
+    <div class="mx-5 py-4 px-4 bg-white shadow-lg rounded-xl mt-5">
+        <div class="w-full py-4">
+            <h2 class="text-left text-xl font-bold color1">
+                사장님만 보는 관심리뷰
+            </h2>
+            <p class="mt-2 text-left font-bold text-gray-500 text-sm mb-3">
+                사장님이 설정한 별점, 키워드가 표함된 리뷰만 모아서 보여드립니다.
+            </p>
+            <p class="items-center font-bold text-xl">
+                <span class="inline-flex items-center color3 ">관심 별점 :</span>
+                <span class="inline-flex px-2 font-bold color3" id="rating"></span>
+            </p>
+            <p class="items-center font-bold text-xl">
+                <span class="inline-flex items-center color3">관심 키워드 :</span>
+                <span class="inline-flex px-2 font-bold color3" id="keyword"></span>
+            </p>
+        </div>
+        <div class="grid grid-cols-6 gap-6">
+            <div class="col-span-3">
+                <div class="relative">
+                    <input id="startDate" type="date" onchange="getReviewList(1)" class="bg-white border border-gray-300 text-lg font-bold shadow-sm rounded-lg block w-full  p-2.5" >
+                </div>
+            </div>
+            <div class="col-span-3">
+                <div class="relative ">
+                    <input  id="endDate" type="date" onchange="getReviewList(1)" class="bg-white border border-gray-300 text-lg font-bold shadow-sm rounded-lg block w-full p-2.5">&nbsp;&nbsp;
+                </div>
+            </div>
+        </div>
+
+
+        <div class="grid grid-cols-6 gap-6 mt-3">
+
+            <div class="col-span-6">
+                <div class="w-full bg-white">
+                    <ul id="resultList">
+
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="partner-modal fixed w-full inset-0 z-50   overflow-hidden flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+        <div class="shadow-lg modal-container bg-white w-11/12 shadow-lg z-50 overflow-hidden  rounded-2xl h-3/5" style="height: 500px;">
+            <div class="flex flex-row justify-between p-6   border-b border-gray-200 rounded-tl-lg rounded-tr-lg ">
+                <div class="flex w-full  items-center text-xl font-bold color3">
+                    파트너 멤버십을 구독해 보세요!
+                </div>
+            </div>
+            <div class="flex flex-col  bg-gray ">
+                <div class="flex flex-col  ">
+                    <div class="relative">
+                        <div class="flex flex-col mt-3 mb-3">
+                            <span class="text-lg color3 ml-3 mb-2 mr-3"><span class="text-lg font-bold color3">파트너 멤버</span>가 되시면</span>
+                            <span class="text-lg color3 font-bold color3  ml-3 mr-3 mb-2"> 1.알림톡으로 쉽게 확인 가능</span>
+                            <span class="text-lg color3  ml-3 mr-3 mb-2">- 매일 아침 어제매출, 입금내역, 관심 리뷰, 부정 취소 의심건을 알려드립니다.</span>
+                            <span class="text-lg color3  ml-3 mr-3 mb-2">- 주간(일요일) / 월간(매월 1일) 분석 자료를 사장님께 정리해서 알려드립니다.</span>
+                            <span class="text-lg color3 font-bold color3  ml-3 mr-3 mb-2"> 2. 관심 리뷰 설정 및 작성자 분석, 키워드 보기</span>
+                            <span class="text-lg color3  ml-3 mr-3 mb-2">-관심 별점, 관심 키워드를 설정하여 관심 리뷰를 보고 받고, 작성자 성향과 대응책도 분석해 보세요.</span>
+                            <span class="text-lg color3  ml-3 mr-3 mb-2">-모든 리뷰를 분석해서 고객의 생각을 한 눈에 확인하고 영업 방향, 주력 메뉴등을 설정해보세요.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full mx-5 py-6">
+                    <button class="p-5 w-11/12 bg-purple-600 text-gray-50 text-2xl rounded-full " onclick="goMembership()">파트너 구독하기</button>
+                </div>
+
+                <div class="w-full  overflow-auto shadow bg-white" style="max-height: 445px;">
+
+                </div>
+
+            </div>
+
+
+
+
+        </div>
+    </div>
+
+
+
+    <div class="user-modal fixed w-full inset-0 z-40 flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+        <div class="shadow-lg modal-container bg-white w-11/12 shadow-lg z-50 rounded-2xl">
+            <div class="flex flex-row justify-between p-6 border-b border-gray-200 rounded-tl-lg rounded-tr-lg">
+                <div class="flex w-full justify-center items-center text-2xl font-bold color3">
+                    <span id="memberName" class="items-center text-2xl color3 font-bold"></span>님의 리뷰 분석
+                </div>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" onclick="modalClose('user-modal')">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <div class="flex flex-col bg-gray">
+                <div class="flex flex-col  bg-gray-100 ">
+                    <div class="relative">
+                        <div class="flex flex-col mt-3 mb-3">
+                            <div class="flex w-full items-center text-xl  color3 px-5">
+                                작성한 리뷰 &nbsp<span id="memberReviewCnt" class="items-center text-xl color3 font-bold">0</span> 개 /
+                                평균 별점 &nbsp <span id="memberReviewRatingAvg" class="items-center text-xl color3 font-bold">0</span> 점
+                            </div>
+                            <div class="flex w-full  items-center text-lg  color3 px-5 mt-2">
+                                <label class="flex justify-start items-start">
+                                    <div class="bg-white border-2 rounded border-gray-400 w-6 h-6 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                        <input type="checkbox" id="otherComment" name="otherComment" class="opacity-0 absolute" onchange="commentRoad();">
+                                        <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                                    </div>
+                                    <div class="color3 text-lg items-center mr-5"> 다른 사장님 대처방안</div>
+                                </label>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="w-full  overflow-auto shadow bg-white" style="max-height: 70vh;" id="journal-scroll2">
+                    <ul id="commetList" class="mx-2 self-center">
+                        <li class="border-b">
+                            <div class="grid grid-cols-4">
+                                <div class="flex flex-col col-span-4 px-1 pt-2">
+                                    <span class="text-md font-bold">안녕안녕안여</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4">
+                                <div class="col-span-4 self-center">
+                                    <span class="text-md  font-semibold">★★★★</span>
+                                    <span class="text-sm text-gray-400 inline-block">2020.11.21</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 mt-3">
+                                <div class="col-span-4 self-center mb-2">
+                                    <span class="text-md color3 font-semibold">인생 첫 자담치킨 맛 봤네요.. 최고입니다. 진작 먹어몰껄 그랬어요..</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 mb-2">
+                                <div class="col-span-4 self-center">
+                                    <span class="text-sm text-gray-400 inline-block">맵슐랭반반치킨/1(맛 선택(마일드（순한맛）),음료 메뉴 변경(콜라))</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 ">
+                                <div class="col-span-4 self-center px-3 py-3 mb-2" style="background-image: url('/public/img/delivery/box-ceo.png'); background-size: cover;" >
+                                    <span class="text-md color3 font-semibold">124124</span>
+                                </div>
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+
+            </div>
+
+
+
+
+        </div>
+    </div>
+
+</main>
+
+<style>
+    .animated {
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+    }
+
+    .animated.faster {
+        -webkit-animation-duration: 500ms;
+        animation-duration: 500ms;
+    }
+
+    .fadeIn {
+        -webkit-animation-name: fadeIn;
+        animation-name: fadeIn;
+    }
+
+    .fadeOut {
+        -webkit-animation-name: fadeOut;
+        animation-name: fadeOut;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0;
+        }
+    }
+</style>
+
+<script>
+    all_modals = ['user-modal','partner-modal']
+    all_modals.forEach((modal)=>{
+        const modalSelected = document.querySelector('.'+modal);
+        modalSelected.classList.remove('fadeIn');
+        modalSelected.classList.add('fadeOut');
+        modalSelected.style.display = 'none';
+    })
+    const modalClose = (modal) => {
+       // $("html, body").removeClass("not_scroll");
+        const modalToClose = document.querySelector('.'+modal);
+        modalToClose.classList.remove('fadeIn');
+        modalToClose.classList.add('fadeOut');
+        setTimeout(() => {
+            modalToClose.style.display = 'none';
+        }, 500);
+    }
+
+    const openModal = (modal) => {
+        //$("html, body").addClass("not_scroll");
+        const modalToOpen = document.querySelector('.'+modal);
+        modalToOpen.classList.remove('fadeOut');
+        modalToOpen.classList.add('fadeIn');
+        modalToOpen.style.display = 'flex';
+    }
+
+</script>
+
+
+
+
+[[template "review_footer" .]]

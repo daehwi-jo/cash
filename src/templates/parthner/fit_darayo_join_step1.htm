@@ -1,0 +1,477 @@
+﻿<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<body class="no_bg">
+
+
+<style>
+  .li_click{
+	  color:#6739ff;
+	  font-weight :bold;
+	  border:1px solid #6739ff; !important;
+  }
+  .autodl {
+	  background-color: #fff;
+	  border:1px solid #000;
+	  position: relative;
+	  display: none;
+  }
+  .autodl dd:hover, .autodl dd.selted { color:#6739ff; border:1px solid #6739ff; cursor:pointer; }
+
+
+</style>
+<script type="text/javascript">
+
+
+
+	window.addEventListener("load", function() {
+		Bcategory();
+	});
+
+	let sCategorId="";
+	let sCategorNm="";
+	let sBcode="";
+	let sBcodeNm="";
+	let sLng="";
+	let sLat="";
+	let hCode="";
+
+	function  biZnumCheck() {
+
+		const lbusid = document.getElementById("lbusid").value
+
+		var opts = {method: 'GET', headers: {"Content-Type": "application/json"}};
+		fetch('/api/etc/bizNumCheck?bizNum='+lbusid, opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+
+			if (res.resultCode == "00"){
+
+				document.getElementById("lbusid").readOnly=true;
+				document.getElementById("lbusid").style="background:#d8d4d4;";
+				document.getElementById("lbusidBtn").setAttribute("disabled","disabled");
+				document.getElementById("lbusidErr").style="display:none;";
+
+
+
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+		});
+
+	}
+
+	function  Bcategory() {
+
+		var opts = {method: 'GET', headers: {"Content-Type": "application/json"}};
+		fetch('/api/cash/commons/category/BIZ_CODE', opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+			//console.log(res)
+			if (res.resultCode == "00"){
+				let html="";
+				res.resultList.forEach(function(v) {
+					html +="<li onclick='Bcode(this);' class='emp' categoryId="+v.categoryId+">"+v.categoryNm+"</li>"
+				});
+				document.getElementById("bCategory").innerHTML=html;
+
+
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+		});
+
+	};
+	function  Bcode(obj) {
+
+		const categoryId = obj.getAttribute('categoryId');
+		document.getElementById("bCategory").childNodes.forEach(function(item){
+			item.setAttribute('class','');
+		});
+		obj.setAttribute('class','li_click')
+		const categoryNm = obj.textContent;
+		sCategorId=categoryId;
+		sCategorNm= categoryNm;
+		sBcode="";
+		sBcodeNm="";
+		document.getElementById("kind").placeholder="선택하기";
+
+		var opts = {method: 'GET', headers: {"Content-Type": "application/json"}};
+		fetch('/api/cash/commons/code/'+categoryId, opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+
+			//console.log(res)
+			if (res.resultCode == "00"){
+				let html="";
+				res.resultList.forEach(function(v) {
+					html +="<li onclick='codeSelect(this);' codeId="+v.codeId+">"+v.codeNm+"</li>"
+				});
+				document.getElementById("bCode").innerHTML=html;
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+		});
+	}
+
+	function codeSelect(obj) {
+		document.getElementById("bCode").childNodes.forEach(function(item){
+			item.setAttribute('class','');
+		});
+		const bcode = obj.getAttribute('codeId');
+		const bcodeNm = obj.textContent;
+		sBcode=bcode;
+		sBcodeNm=bcodeNm;
+		obj.setAttribute('class','li_click')
+
+
+	}
+
+
+	function selectOk() {
+
+		if (sCategorId == ""){
+			alert("종류를 선택해주세요.");
+			toggleModal();
+			return;
+		}
+
+		if (sBcode == ""){
+			alert("업종을 선택해주세요.");
+			toggleModal();
+			return;
+		}
+		document.getElementById("kind").placeholder = sCategorNm +">" + sBcodeNm;
+	}
+
+
+	function  kakaoapi() {
+
+		const lstoreNm = document.getElementById('lstoreNm').value;
+		let html="";
+		if(lstoreNm.length < 2){
+			document.getElementById("autoList").style="display:none;"
+			return;
+		}
+		//XMLHttpRequest 객체 생성
+		let xhr = new XMLHttpRequest();
+		//요청을 보낼 방식, 주소, 비동기여부 설정
+		xhr.open('GET', 'http://dapi.kakao.com/v2/local/search/keyword.json?query='+encodeURIComponent(lstoreNm), true);
+		//HTTP 요청 헤더 설정
+		xhr.setRequestHeader('Authorization', 'KakaoAK c2bc6457eaaf39999ed317da290848ea');
+		//요청 전송
+		xhr.responseType='json';
+		xhr.send("");
+		//통신후 작업
+		xhr.onload = function () {
+			//통신 성공
+			if (xhr.status == 200) {
+				//console.log(xhr.response)
+				let addrList  = xhr.response.documents;
+				addrList.forEach(function(v) {
+					html +="<dd onclick='selectAddr(this);' vaddr='"+v.road_address_name+"' vlat='"+v.x+"' vlng='"+v.y+"' vstoreNm='"+v.place_name+"'>"
+							+v.place_name+" ("+v.road_address_name+")</dd>"
+				});
+				document.getElementById("autoList").innerHTML=html;
+				document.getElementById("autoList").style="display:block;"
+			} else {
+		//		console.log(xhr)
+				alert("통신 오류");
+				return;
+			}
+		}
+	}
+
+	function  kakaoapi_addr(paddr) {
+		//XMLHttpRequest 객체 생성
+		let xhr = new XMLHttpRequest();
+		//요청을 보낼 방식, 주소, 비동기여부 설정
+		xhr.open('GET', 'http://dapi.kakao.com/v2/local/search/address.json?query='+encodeURIComponent(paddr)+'&analyze_type=exact', true);
+		//HTTP 요청 헤더 설정
+		xhr.setRequestHeader('Authorization', 'KakaoAK c2bc6457eaaf39999ed317da290848ea');
+		//요청 전송
+		xhr.responseType='json';
+		xhr.send("");
+		//통신후 작업
+		xhr.onload = function () {
+			//통신 성공
+			if (xhr.status == 200) {
+				hCode  = xhr.response.documents[0].address.h_code;
+			} else {
+				//		console.log(xhr)
+				alert("통신 오류");
+				return;
+			}
+		}
+	}
+
+	function  selectAddr(obj) {
+
+		const vaddr = obj.getAttribute('vaddr');
+		const vlat = obj.getAttribute('vlat');
+		const vlng = obj.getAttribute('vlng');
+		const vstoreNm = obj.getAttribute('vstoreNm');
+		sLat =vlat;
+		sLng =vlng;
+		document.getElementById("lstoreNm").value=vstoreNm;
+		document.getElementById("laddr").value=vaddr;
+		document.getElementById("autoList").style="display:none;"
+		kakaoapi_addr(vaddr);
+	}
+
+
+
+	function  joinStep1_Ok() {
+
+		//console.log(hCode)
+		let lstoreNm = document.getElementById("lstoreNm").value;
+		let lbusid = document.getElementById("lbusid").value;
+		let laddr = document.getElementById("laddr").value;
+		let laddr2 = document.getElementById("laddr2").value;
+
+
+
+		document.getElementById("lstoreNmErr").innerText="";
+		document.getElementById("lbusidErr").innerText="";
+		document.getElementById("laddrErr").innerText="";
+		document.getElementById("lkindErr").innerText="";
+
+
+		if (lstoreNm == ""){
+			document.getElementById("lstoreNmErr").style.display="block";
+			document.getElementById("lstoreNmErr").innerText="* 상호명을 입력해주세요.";
+			document.getElementById("lstoreNm").focus();
+			return;
+		}
+
+		if (lbusid == ""){
+			document.getElementById("lbusidErr").style.display="block";
+			document.getElementById("lbusidErr").innerText="* 사업자 등록번호를 입력해주세요.";
+			document.getElementById("lbusid").focus();
+			return;
+		}
+
+		if (laddr == ""){
+			document.getElementById("laddrErr").style.display="block";
+			document.getElementById("laddrErr").innerText="* 주소를 입력해주세요.";
+			document.getElementById("laddr").focus();
+			return;
+		}
+
+		if (laddr2 == ""){
+			document.getElementById("laddrErr").style.display="block";
+			document.getElementById("laddrErr").innerText="* 상세주소를 입력해주세요.";
+			document.getElementById("laddr2").focus();
+			return;
+		}
+
+		if (sCategorId  == ""){
+			document.getElementById("lkindErr").style.display="block";
+			document.getElementById("lkindErr").innerText="* 업종을 선택해주세요.";
+
+			return;
+		}
+
+		if (sBcode == ""){
+			document.getElementById("lkindErr").style.display="block";
+			document.getElementById("lkindErr").innerText="* 업종을 선택해주세요.";
+			return;
+		}
+
+		let sendData = {
+			userId: sessionStorage.getItem('userId'),
+			storeNm: lstoreNm,
+			bizNum: lbusid,
+			category: sCategorId,
+			kind: sBcode,
+			addr: laddr,
+			addr2:laddr2,
+			lat: sLat,
+			lng: sLng,
+			hCode : hCode
+		};
+		var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+		fetch('/api/cash/joinStep2', opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+			//console.log(res)
+			if (res.resultCode == "00"){
+				//sessionStorage.setItem('userId', res.resultCode.userId);
+				sessionStorage.setItem('storeId', res.resultData.storeId);
+				sessionStorage.setItem('storeNm', lstoreNm);
+				sessionStorage.setItem('bizNum', lbusid);
+
+				location.href="/parthner/p/guideCertify";
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+		});
+
+	}
+
+
+
+
+</script>
+<div class="fix_width">
+	<div class="login_tit">가맹점 정보 입력</div>
+	<ul class="login_cont">
+		<form>
+		<li>상호명</li>
+		<li class="ph_mb">
+				<input type="text" id="lstoreNm"  onkeyup="kakaoapi();" placeholder="매장 상호명" autocomplete="off"/>
+
+					<dl class="autodl" id="autoList">
+					</dl>
+			<div class="mbotm15 red tit11" id="lstoreNmErr"></div>
+		</li>
+		<li >사업자 등록 번호</li>
+		<li class="ph_mb">
+			<input type="text" id="lbusid"  placeholder="000-00-0000" class="inp_phone" />
+			<input type="button" id="lbusidBtn" onclick="biZnumCheck();" value="확인" class="btn_phone" />
+			<div class="mbotm15 red tit11" id="lbusidErr"></div>
+		</li>
+		<li>주소</li>
+		<li class="ph_ma">
+
+			<div id="wrap" style="display:none;border:1px solid;width:357px;height:300px;margin:5px 0;position:relative">
+				<img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="sfoldDaumPostcode()" alt="접기 버튼">
+			</div>
+
+			<input type="text" id="laddr" onclick="execDaumPostcode()" readonly placeholder="주소 입력" />
+
+		</li>
+		<li class="ph_mb"><input type="text" id="laddr2"  />
+			<div class="mbotm15 red tit11" id="laddrErr"></div>
+		</li>
+
+
+		<li>업종선택</li>
+		<li class="ph_mb"><input type="text" id="kind" placeholder="선택하기" class="trigger" readonly="readonly" />
+			<div class="mbotm15 red tit11" id="lkindErr"></div>
+		</li>
+		<li><input type="button" onclick="joinStep1_Ok();" value="저장 후 인증하기" class="btn_login" />
+		</li>
+		<li>
+			<div class="mbotm20 agnc gray6">
+				인증하시면 <span class="vblue uline">매출 분석 및 예측 서비스</span>를 받을 수 있습니다.
+			</div>
+		</li>
+		</form>
+	</ul>
+</div>
+
+<!--// POPUP 업종선택 --> 
+<div class="modal">
+	<div class="modal-content">
+		<div class="close-button"></div>
+		<div class="mbotm20 tit15 bl">종류 및 업종을 선택해주세요 !</div>
+		<div class="mbotm10 tit13">종류</div>
+		<ul class="selt_list" id="bCategory">
+		</ul>
+		<div class="mbotm10 tit13">업종</div>
+		<ul class="selt_list" id="bCode">
+		</ul>
+		<input type="button"  onclick="selectOk();" value="완료" class="btn_login btn-close" />
+	</div>
+</div>
+
+</body>
+</html>
+
+<script type="text/javascript">
+	var modal = document.querySelector(".modal");
+	var trigger = document.querySelector(".trigger");
+	var closeButton = document.querySelector(".close-button");
+	var cancel = document.querySelector(".btn-close");
+	
+	//console.log(modal);
+	function toggleModal() {
+		modal.classList.toggle("show-modal");
+	}
+	
+	function windowOnClick(event) {
+		if (event.target === modal) {
+			toggleModal();
+		}
+	}
+	
+	trigger.addEventListener("click", toggleModal);
+	closeButton.addEventListener("click", toggleModal);
+	cancel.addEventListener("click", toggleModal);
+	window.addEventListener("click", windowOnClick);
+</script>
+
+
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+	var element_wrap = document.getElementById('wrap');
+	function sfoldDaumPostcode() {
+		element_wrap.style.display = 'none';
+	}
+
+	function execDaumPostcode() {
+		// 현재 scroll 위치를 저장해놓는다.
+		var currentScroll = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
+		new daum.Postcode({
+			oncomplete: function(data) {
+				var addr = ''; // 주소 변수
+				var extraAddr = ''; // 참고항목 변수
+				if (data.userSelectedType === 'R') { // 사용자가 도로명 주소를 선택했을 경우
+					addr = data.roadAddress;
+				} else { // 사용자가 지번 주소를 선택했을 경우(J)
+					addr = data.jibunAddress;
+				}
+				if(data.userSelectedType === 'R'){
+					if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+						extraAddr += data.bname;
+					}
+					if(data.buildingName !== '' && data.apartment === 'Y'){
+						extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+					}
+					if(extraAddr !== ''){
+						extraAddr = ' (' + extraAddr + ')';
+					}
+					document.getElementById("laddr").value = extraAddr;
+
+				} else {
+					document.getElementById("laddr").value = '';
+				}
+
+
+				// 우편번호와 주소 정보를 해당 필드에 넣는다.
+				document.getElementById("laddr").value = addr;
+				// 커서를 상세주소 필드로 이동한다.
+				document.getElementById("laddr2").focus();
+				element_wrap.style.display = 'none';
+				document.body.scrollTop = currentScroll;
+
+
+				kakaoapi_addr(addr);
+			},
+			onresize : function(size) {
+				element_wrap.style.height = size.height+'px';
+			},
+			width : '100%',
+			height : '100%'
+		}).embed(element_wrap);
+		element_wrap.style.display = 'block';
+	}
+</script>

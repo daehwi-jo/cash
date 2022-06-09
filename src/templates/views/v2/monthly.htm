@@ -1,0 +1,384 @@
+﻿
+<!--header"-->
+[[template "review_header" .]]
+<!--header"-->
+<style>
+	.barColor{background-color: #ffc600}
+	::-webkit-scrollbar {
+		width: 1px;
+	}
+	.max-h-0 {
+		max-height: 0;
+	}
+	.wordLimit {
+		display: block;
+		overflow: hidden;
+		width: 225px;
+		text-overflow: ellipsis;
+		white-space: normal;
+		text-align: left;
+		word-wrap: break-word;
+		display: -webkit-box;
+		-webkit-line-clamp: 2 ;
+		-webkit-box-orient: vertical;
+	}
+
+</style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.3.2/dist/cdn.min.js"></script>
+<script type='text/javascript'>
+
+
+	window.addEventListener("load", function() {
+		getMonthlyData();
+	});
+
+
+
+	let ratingData;
+	let restId;
+	let int_Month=0;
+	function  getMonthlyData() {
+		let sendData = {
+			bizNum: [[.bizNum]],
+		};
+
+		LoadingBar("on");
+		var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+		fetch('/api/cash/v2/getMonthly', opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+			// console.log(res)
+			if (res.resultCode == "00") {
+				ratingData=res.sixMonthSales;
+				setData();
+				let html="";
+				document.getElementById("REST_NM").innerText=res.restNm;
+				int_Month=parseInt(res.reviewInfo.MONTH);
+				document.getElementById("MONTH").innerText=res.reviewInfo.MONTH.replace(/(^0+)/, "");;
+				restId=res.restId;
+
+
+				if (isEmpty(res.salesInfo) == false) {
+					document.getElementById("APRV_AMT").innerText = Format_comma(res.salesInfo.APRV_AMT)+" 원";
+					document.getElementById("MAX_CARD_NM").innerText = res.salesInfo.MAX_CARD_NM;
+					document.getElementById("CAN_CNT").innerText = Format_comma(res.salesInfo.CAN_CNT) +" 건";
+					document.getElementById("TOT_CNT").innerText = Format_comma(res.salesInfo.TOT_CNT) +" 건";
+
+				}else{
+					document.getElementById("APRV_AMT").innerText = "0 원";
+					document.getElementById("MAX_CARD_NM").innerText ="";
+					document.getElementById("CAN_CNT").innerText = "0 건";
+					document.getElementById("TOT_CNT").innerText ="0 건";
+				}
+
+				if (isEmpty(res.reviewInfo) == false) {
+					document.getElementById("allCnt").innerText = Format_comma(res.reviewInfo.total_cnt)+" 건";
+					document.getElementById("allAvg").innerText =  res.reviewInfo.total_avg+" 점";
+					document.getElementById("MONTH").innerText=	res.reviewInfo.MONTH;
+
+				}else{
+					document.getElementById("allCnt").innerText = "0 건";
+					document.getElementById("allAvg").innerText ="0 점";
+				}
+
+
+				if (isEmpty(res.cancle) == false) {
+					document.getElementById("nightCancle").innerText = Format_comma(res.cancle.nightCancle)+" 건";
+					document.getElementById("timeCancle").innerText =  Format_comma(res.cancle.timeCancle)+" 건";
+
+				}else{
+					document.getElementById("nightCancle").innerText = "0 건";
+					document.getElementById("timeCancle").innerText ="0 건";
+				}
+
+				if (isEmpty(res.orderInfo) == false) {
+					document.getElementById("ORDER_AMT").innerText = Format_comma(res.orderInfo.ORDER_AMT)+" 원";
+				}else{
+					document.getElementById("ORDER_AMT").innerText = "0 원";
+				}
+
+
+
+
+				if (isEmpty(res.lastMonthPayAmt) == false) {
+					document.getElementById("realInAmt").innerText = Format_comma(res.lastMonthPayAmt.realInAmt)+" 원";
+					document.getElementById("outpExptAmt").innerText =  Format_comma(res.lastMonthPayAmt.outpExptAmt)+" 원";
+
+				}else{
+					document.getElementById("realInAmt").innerText = "0 원";
+					document.getElementById("outpExptAmt").innerText ="0 원";
+				}
+				if (isEmpty(res.contentsInfo) == false) {
+					res.contentsInfo.forEach(function (v) {
+						html += '<div class="px-2 flex-shrink-0 gallery-item  mb-2 relative" data-slider-target="image" id="' + v.contentId + '">'
+						if (v.type == "video.other") {
+							baseImg = '/public/img/delivery/youtube_content.png';
+						} else {
+							baseImg = '/public/img/delivery/blog_content.png';
+						}
+						html += '  <a href="' + v.url + '"><img class="rounded-xl" style="width: 225px; height: 125px;" src="' + v.imageUrl + '" referrerpolicy="no-referrer" onerror="this.src=' + baseImg + '" /></a>'
+						if (v.type == "video.other") {
+							html += ' <img class="absolute py-5 bottom-12 px-11 inset-x-48" src="/public/img/delivery/youtube.png">'
+						}
+						html += '    <h2 class="text-left text-lg font-bold color3 mt-1 px-3 wordLimit" ><a href="' + v.url + '">' + v.title + ' </a></h2>'
+						html += '</div>'
+					});
+					document.getElementById("c_slider").innerHTML = html;
+				}else{
+					$("#contents").hide();
+				}
+				LoadingBar("off");
+
+			}else if (res.resultCode == "01") {
+				LoadingBar("off");
+				return;
+			}else if (res.resultCode == "99"){
+				LoadingBar("off");
+				return;
+			}else{
+				alert("통신 오류");
+				LoadingBar("off");
+				return; ``
+			}
+		});
+	};
+
+
+	function setData(){
+		google.load("visualization", "1", {packages: ["corechart"]});
+		google.setOnLoadCallback(setChart);
+	}
+
+	function setChart(){
+
+
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Month');
+		data.addColumn('number', 'rating');
+		data.addColumn({type: 'number', role: 'annotation'});
+		data.addColumn({type:'string', role:'style'}); // style col.
+
+		let jData=ratingData;
+		let cStyle='point{ size: 3; fill-color: #202020; stroke-color: #cbcbcb; stroke-width: 2;}'
+
+			tAvg0=parseFloat(jData[0].TOT_AMT);
+			tAvg1=parseFloat(jData[1].TOT_AMT);
+			tAvg2=parseFloat(jData[2].TOT_AMT);
+			tAvg3=parseFloat(jData[3].TOT_AMT);
+			tAvg4=parseFloat(jData[4].TOT_AMT);
+			tAvg5=parseFloat(jData[5].TOT_AMT);
+
+
+		data.addRows([
+			[Format_date(jData[0].BS_DT), tAvg0, tAvg0,cStyle],
+			[Format_date(jData[1].BS_DT), tAvg1, tAvg1,cStyle],
+			[Format_date(jData[2].BS_DT), tAvg2, tAvg2,cStyle],
+			[Format_date(jData[3].BS_DT), tAvg3, tAvg3,cStyle],
+			[Format_date(jData[4].BS_DT), tAvg4, tAvg4,cStyle],
+			[Format_date(jData[5].BS_DT), tAvg5, tAvg5,cStyle],
+		]);
+
+		var options = {
+			pointSize: 3,
+			vAxis: {textPosition : 'none'},
+			legend: {position: 'none'},
+			tooltip: {trigger: 'none'},
+			colors: ['#202020'],
+			lineWidth:1,
+			chartArea: {'width': '95%', 'height': '70%'},
+		};
+
+		var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+		chart.draw(data, options);
+
+	}
+
+
+
+	function reviewGo() {
+
+		let startDate=getDate(int_Month, 1);
+		let endDate=getDate(int_Month, 0);
+
+		location.href="/review/reviewList?restId="+restId+"&startDt="+startDate+"&endDt="+endDate;
+	}
+
+	function Format_date(str) {
+		str = str.substring(4)+"월"
+		return str;
+	}
+
+	function Format_comma(str) {
+		str = String(str);
+		var minus = str.substring(0, 1);
+
+		str = str.replace(/[^\d]+/g, '');
+		str = str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+
+		//음수일 경우
+		if (minus == "-") str = "-" + str;
+
+		return str;
+	}
+
+	function getDate(month, day) {
+		const padding = (number) => {
+			return (number > 9) ? number : "0" + number
+		}
+		let year = new Date().getFullYear();
+		let toDay = new Date()
+		month = (month === 0) ? toDay.getMonth() + 1 : month
+		day = (day === 0) ? new Date(year, month, 0).getDate() : day
+
+		return toDay.getFullYear() + "-" + padding(month) + "-" + padding(day)
+	}
+
+
+
+</script>
+<main class="mb-5">
+
+	<div class="mx-5 py-2 px-2 mt-5">
+		<h2 class="text-left text-lg font-bold color3 ml-5 mb-2">
+			<div class="flex items-center justify-between">
+				<div class="">
+					<span class="text-left  text-2xl font-bold color3 ml-1" id="MONTH">월</span>
+					<span class="text-left  text-2xl font-bold color3" id="REST_NM" style="text-decoration-line:underline; text-decoration-thickness:4px; text-decoration-color:#6d00ff59; text-underline-offset: 1px;">
+
+					</span>
+					<span class="text-left  text-2xl font-bold color3 mr-1">보고서</span>
+				</div>
+				<div class="text-left flex-shrink-0 gallery-item relative " data-slider-target="image">
+					<img src="/public/img/delivery/icon-cash.png" onclick="location.href='https://darayos.page.link/vn1s'">
+				</div>
+			</div>
+		</h2>
+	</div>
+
+	<div class="mx-5 py-2 px-2 bg-white shadow-lg rounded-xl">
+		<h2 class="text-left text-lg font-bold color3 mt-2 mb-5">
+			<div class="flex items-center justify-start border-b-2 border-gray-200">
+				<span class="text-left  text-xl font-bold color3 ml-5 mb-2">지난달 매출 </span>
+			</div>
+		</h2>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg color3">지난달 매출</div>
+			<div class="text-lg font-bold color3" id="APRV_AMT">0원</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">결제가 많은 카드</div>
+			<div class="text-lg font-bold color3" id="MAX_CARD_NM"></div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">달아요 장부 사용액</div>
+			<div class="text-lg font-bold color3" id="ORDER_AMT">0원</div>
+		</div>
+
+	</div>
+
+	<div class="mx-5 py-4 px-4 bg-white shadow-lg mt-5 rounded-xl">
+		<h2 class="text-left text-lg font-bold color3 mt-2 mb-2">
+			<div class="flex items-center justify-between border-b-2 border-gray-200">
+				<div class="text-left  text-xl font-bold color3 ml-5 mb-2">6개월 매출 추이</div>
+				<div class="text-left  text-sm color3 ml-5 mb-2">단위(천)</div>
+			</div>
+		</h2>
+		<div class="w-full">
+			<div id="chart_div"></div>
+		</div>
+	</div>
+
+	<div class="mx-5 mt-5 py-2 px-2 bg-white shadow-lg rounded-xl">
+		<h2 class="text-left text-lg font-bold color3 mt-2 mb-5">
+			<div class="flex items-center justify-start border-b-2 border-gray-200">
+				<span class="text-left  text-xl font-bold color3 ml-5 mb-2">지난달 취소 </span>
+			</div>
+		</h2>
+
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg color3">전체 거래</div>
+			<div class="text-lg font-bold color3" id="TOT_CNT">0 건</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">취소 거래 </div>
+			<div class="text-lg font-bold color3"  id="CAN_CNT">0 건</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">- 심야 취소</div>
+			<div class="text-lg font-bold color3" id="nightCancle">0 건</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">- 3시간 이후 취소</div>
+			<div class="text-lg font-bold color3" id="timeCancle">0 건</div>
+		</div>
+
+	</div>
+
+	<div class="mx-5 mt-5 py-2 px-2 bg-white shadow-lg rounded-xl">
+		<h2 class="text-left text-lg font-bold color3 mt-2 mb-5">
+			<div class="flex items-center justify-start border-b-2 border-gray-200">
+				<span class="text-left  text-xl font-bold color3 ml-5 mb-2">지난달 입금</span>
+			</div>
+		</h2>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg color3">전체 입금액</div>
+			<div class="text-lg font-bold color3" id="realInAmt">0원</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">미입금액</div>
+			<div class="text-lg font-bold color3" id="outpExptAmt">0원</div>
+		</div>
+
+	</div>
+
+	<div class="mx-5 mt-5 py-2 px-2 bg-white shadow-lg rounded-xl">
+		<h2 class="text-left text-lg font-bold color3 mt-2 mb-5 ">
+			<div class="flex items-center justify-between border-b-2 border-gray-200">
+				<span class="text-left  text-xl font-bold color3 ml-5 mb-2">지난달 리뷰</span>
+				<div class="mb-2 mr-5 ">
+					<button type="button" class="w-full bg-purple-400 rounded-xl px-2 py-1 text-left" onclick="reviewGo();">
+						<span class="text-sm font-bold text-white">리뷰 전체 보기</span>
+					</button>
+				</div>
+			</div>
+
+		</h2>
+
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg color3">전체 등록 리뷰</div>
+			<div class="text-lg font-bold color3" id="allCnt">0건</div>
+		</div>
+		<div class="flex items-center justify-between ml-5 mr-5 mb-2">
+			<div class="text-lg  color3">평균 별점</div>
+			<div class="text-lg font-bold color3" id="allAvg">0점</div>
+		</div>
+
+	</div>
+
+	<div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl" data-controller="slider" id="contents">
+		<h2 class="text-left text-xl font-bold color3 mt-5 ml-5 mb-5">
+			지난달 소식
+		</h2>
+		<div id="c_slider" class="flex overflow-x-scroll hide-scroll-bar overscroll-x-contain overflow-y-hidden ml-2 mt-2 gallery" data-slider-target="scrollContainer">
+
+		</div>
+	</div>
+</main>
+
+<style type="text/css">
+	.gallery-item {
+		scroll-snap-align: start;
+	}
+	.gallery {
+		-webkit-overflow-scrolling: touch;
+		scroll-snap-type: x mandatory;
+	}
+	.custom_box_botm {
+		border-top: 2px dashed #ddd;
+	}
+</style>
+
+
+
+[[template "review_footer" .]]

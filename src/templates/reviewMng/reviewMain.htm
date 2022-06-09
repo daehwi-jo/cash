@@ -1,0 +1,570 @@
+
+<!--header"-->
+[[template "review_header" .]]
+<!--header"-->
+<style>
+    .barColor{background-color: #ffc600}
+    ::-webkit-scrollbar {
+        width: 1px;
+    }
+    .max-h-0 {
+        max-height: 0;
+    }
+    .wordLimit {
+        display: block;
+        overflow: hidden;
+        width: 225px;
+        text-overflow: ellipsis;
+        white-space: normal;
+        text-align: left;
+        word-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 2 ;
+        -webkit-box-orient: vertical;
+    }
+
+</style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.3.2/dist/cdn.min.js"></script>
+<script type='text/javascript'>
+
+
+    window.addEventListener("load", function() {
+        getReviewMain();
+        getReviewMain2();
+    });
+
+
+
+    let ratingData;
+    function  getReviewMain() {
+        let sendData = {
+            restId: [[.restId]],
+        };
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/getReviewMain', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+           // console.log(res)
+            if (res.resultCode == "00") {
+                ratingData=res;
+                setData();
+
+            }else if (res.resultCode == "01") {
+                return;
+            }else if (res.resultCode == "99"){
+                return;
+            }else{
+                alert("통신 오류");
+                return; ``
+            }
+        });
+    };
+
+    function  getReviewMain2() {
+        let sendData = {
+            restId: [[.restId]],
+        };
+        var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+        fetch('/review/api/getReviewMain2', opts).then(function(response) {
+            return response.json();
+        }).then(function(res) {
+            // console.log(res)
+            let html="";
+            let baseImg="";
+            if (res.resultCode == "00") {
+
+
+                if (isEmpty(res.resultData.tips) == false){
+                    document.getElementById("tipTitle").innerText=res.resultData.tips[0].title;
+                    document.getElementById("tipContents").innerText=res.resultData.tips[0].content;
+                    document.getElementById("tipUrl").href=res.resultData.tips[0].linkUrl;
+                }else{
+                    $("#tips").hide();
+                }
+
+                if (isEmpty(res.resultData.contents) == false) {
+                    res.resultData.contents.forEach(function (v) {
+                        html += '<div class="px-2 flex-shrink-0 gallery-item  mb-2 relative" data-slider-target="image" id="' + v.contentId + '">'
+                        if (v.type == "video.other") {
+                            baseImg = '/public/img/delivery/youtube_content.png';
+                        } else {
+                            baseImg = '/public/img/delivery/blog_content.png';
+                        }
+                        html += '  <a href="' + v.url + '"><img class="rounded-xl" style="width: 225px; height: 125px;" src="' + v.imageUrl + '" referrerpolicy="no-referrer" onerror="this.src=' + baseImg + '" /></a>'
+                        if (v.type == "video.other") {
+                            html += ' <img class="absolute py-5 bottom-12 px-11 inset-x-48" src="/public/img/delivery/youtube.png">'
+                        }
+                        html += '    <h2 class="text-left text-lg font-bold color3 mt-1 px-3 wordLimit" ><a href="' + v.url + '">' + v.title + ' </a></h2>'
+                        html += '</div>'
+                    });
+                    document.getElementById("c_slider").innerHTML = html;
+                }else{
+                    $("#contents").hide();
+                }
+
+                if(res.resultData.wordCloudResult == "y"){
+					$('#wordCloud2').css('display','none');
+				}else{
+					$('#wordCloud').css('display','none');
+				}
+
+                if (res.resultData.billingInfo ==""){
+                    $('#wordCloudText').html("위 데이터는 예시입니다.<br />파트너멤버가 되시면 고객 생각을 한 눈에 볼 수 있습니다.")
+                }
+
+            }else if (res.resultCode == "01") {
+                return;
+            }else if (res.resultCode == "99"){
+                return;
+            }else{
+                alert("통신 오류");
+                return; ``
+            }
+        });
+    };
+
+    function setData(){
+        setRating()
+        google.load("visualization", "1", {packages: ["corechart"]});
+        google.setOnLoadCallback(setChart);
+    }
+
+    function setChart(){
+
+        let d_type=document.getElementById("d_type").value;
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Month');
+        data.addColumn('number', 'rating');
+        data.addColumn({type: 'number', role: 'annotation'});
+        data.addColumn({type:'string', role:'style'}); // style col.
+
+        let jData=ratingData.monthRatingInfo;
+        let cStyle='point{ size: 3; fill-color: #202020; stroke-color: #cbcbcb; stroke-width: 2; }'
+
+        if (d_type=='all'){
+            tAvg0=parseFloat(jData[0].total_avg);
+            tAvg1=parseFloat(jData[1].total_avg);
+            tAvg2=parseFloat(jData[2].total_avg);
+            tAvg3=parseFloat(jData[3].total_avg);
+            tAvg4=parseFloat(jData[4].total_avg);
+            tAvg5=parseFloat(jData[5].total_avg);
+        }else if (d_type=='baemin'){
+            tAvg0=parseFloat(jData[0].bamin_avg);
+            tAvg1=parseFloat(jData[1].bamin_avg);
+            tAvg2=parseFloat(jData[2].bamin_avg);
+            tAvg3=parseFloat(jData[3].bamin_avg);
+            tAvg4=parseFloat(jData[4].bamin_avg);
+            tAvg5=parseFloat(jData[5].bamin_avg);
+
+        }else if (d_type=='yogiyo'){
+            tAvg0=parseFloat(jData[0].yogiyo_avg);
+            tAvg1=parseFloat(jData[1].yogiyo_avg);
+            tAvg2=parseFloat(jData[2].yogiyo_avg);
+            tAvg3=parseFloat(jData[3].yogiyo_avg);
+            tAvg4=parseFloat(jData[4].yogiyo_avg);
+            tAvg5=parseFloat(jData[5].yogiyo_avg);
+
+        }else if (d_type=='coupang'){
+            tAvg0=parseFloat(jData[0].coupang_avg);
+            tAvg1=parseFloat(jData[1].coupang_avg);
+            tAvg2=parseFloat(jData[2].coupang_avg);
+            tAvg3=parseFloat(jData[3].coupang_avg);
+            tAvg4=parseFloat(jData[4].coupang_avg);
+            tAvg5=parseFloat(jData[5].coupang_avg);
+
+        }else if (d_type=='naver'){
+            tAvg0=parseFloat(jData[0].naver_avg);
+            tAvg1=parseFloat(jData[1].naver_avg);
+            tAvg2=parseFloat(jData[2].naver_avg);
+            tAvg3=parseFloat(jData[3].naver_avg);
+            tAvg4=parseFloat(jData[4].naver_avg);
+            tAvg5=parseFloat(jData[5].naver_avg);
+
+        }
+
+        data.addRows([
+            [jData[0].MONTH, tAvg0, tAvg0,cStyle],
+            [jData[1].MONTH, tAvg1, tAvg1,cStyle],
+            [jData[2].MONTH, tAvg2, tAvg2,cStyle],
+            [jData[3].MONTH, tAvg3, tAvg3,cStyle],
+            [jData[4].MONTH, tAvg4, tAvg4,cStyle],
+            [jData[5].MONTH, tAvg5, tAvg5,cStyle],
+        ]);
+
+        var options = {
+            pointSize: 3,
+            vAxis: {minValue: 0, maxValue: 6},
+            legend: {position: 'none'},
+            tooltip: {trigger: 'none'},
+            colors: ['#202020'],
+            lineWidth:1,
+            chartArea: {'width': '95%', 'height': '70%'},
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+    }
+
+    function  setRating() {
+        let d_type=document.getElementById("d_type").value;
+        let rating_5=0;
+        let rating_4=0;
+        let rating_3=0;
+        let rating_2=0;
+        let rating_1=0;
+        let rating_tot_cnt=0;
+        let rating_tot_avg=0;
+        if (d_type=='all'){
+            rating_5=ratingData.resultData[4].tot_cnt;
+            rating_4=ratingData.resultData[3].tot_cnt;
+            rating_3=ratingData.resultData[2].tot_cnt;
+            rating_2=ratingData.resultData[1].tot_cnt;
+            rating_1=ratingData.resultData[0].tot_cnt;
+            rating_tot_cnt= ratingData.ratingCnt.allCnt;
+            rating_tot_avg= ratingData.ratingCnt.allAvg.toFixed(1);
+        }else if (d_type=='baemin'){
+            rating_5=ratingData.resultData[4].bamin_cnt;
+            rating_4=ratingData.resultData[3].bamin_cnt;
+            rating_3=ratingData.resultData[2].bamin_cnt;
+            rating_2=ratingData.resultData[1].bamin_cnt;
+            rating_1=ratingData.resultData[0].bamin_cnt;
+            rating_tot_cnt= ratingData.ratingCnt.baminCnt;
+            rating_tot_avg= ratingData.ratingCnt.baminAvg.toFixed(1);
+        }else if (d_type=='yogiyo'){
+            rating_5=ratingData.resultData[4].yogiyo_cnt;
+            rating_4=ratingData.resultData[3].yogiyo_cnt;
+            rating_3=ratingData.resultData[2].yogiyo_cnt;
+            rating_2=ratingData.resultData[1].yogiyo_cnt;
+            rating_1=ratingData.resultData[0].yogiyo_cnt;
+            rating_tot_cnt= ratingData.ratingCnt.yogiyoCnt;
+            rating_tot_avg= ratingData.ratingCnt.yogiyoAvg.toFixed(1);
+        }else if (d_type=='coupang'){
+            rating_5=ratingData.resultData[4].coupang_cnt;
+            rating_4=ratingData.resultData[3].coupang_cnt;
+            rating_3=ratingData.resultData[2].coupang_cnt;
+            rating_2=ratingData.resultData[1].coupang_cnt;
+            rating_1=ratingData.resultData[0].coupang_cnt;
+            rating_tot_cnt= ratingData.ratingCnt.coupangCnt;
+            rating_tot_avg= ratingData.ratingCnt.coupangAvg.toFixed(1);
+        }else if (d_type=='naver'){
+            rating_5=ratingData.resultData[4].naver_cnt;
+            rating_4=ratingData.resultData[3].naver_cnt;
+            rating_3=ratingData.resultData[2].naver_cnt;
+            rating_2=ratingData.resultData[1].naver_cnt;
+            rating_1=ratingData.resultData[0].naver_cnt;
+            rating_tot_cnt= ratingData.ratingCnt.naverCnt;
+            rating_tot_avg= ratingData.ratingCnt.naverAvg.toFixed(1);
+        }
+
+        let ratingWidth = (rating_tot_avg * 20) + 1.5;
+
+        document.getElementById('ratingDisplay').style.width=ratingWidth+'25%';
+        document.getElementById("rating_tot_cnt").innerText =  Format_comma(rating_tot_cnt)+'개';
+        document.getElementById("rating_tot_avg").innerText =  rating_tot_avg;
+        document.getElementById("rating_5").innerText = Format_comma(rating_5);
+        document.getElementById("rating_4").innerText = Format_comma(rating_4);
+        document.getElementById("rating_3").innerText = Format_comma(rating_3);
+        document.getElementById("rating_2").innerText = Format_comma(rating_2);
+        document.getElementById("rating_1").innerText = Format_comma(rating_1);
+
+
+        let i = 1;
+        let ratingCnt=0
+        let totCnt=0
+        ratingData.resultData.forEach(function(v) {
+            if (d_type=='all'){
+                totCnt=v.tot_cnt;
+                ratingCnt = ratingData.ratingCnt.allCnt;
+            }else if (d_type=='baemin') {
+                totCnt=v.bamin_cnt;
+                ratingCnt = ratingData.ratingCnt.baminCnt;
+            }else if (d_type=='yogiyo') {
+                totCnt=v.yogiyo_cnt;
+                ratingCnt = ratingData.ratingCnt.yogiyoCnt;
+            }else if (d_type=='coupang') {
+                totCnt=v.coupang_cnt;
+                ratingCnt = ratingData.ratingCnt.coupangCnt;
+            }else if (d_type=='naver') {
+                totCnt=v.naver_cnt;
+                ratingCnt = ratingData.ratingCnt.naverCnt;
+            }
+            document.getElementById('rating_bar_'+i).style.width=((totCnt/ratingCnt).toFixed(2)*100)+'%';
+            i=i+1;
+        });
+
+    }
+
+
+    function Format_comma(str) {
+        str = String(str);
+        var minus = str.substring(0, 1);
+
+        str = str.replace(/[^\d]+/g, '');
+        str = str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+
+        //음수일 경우
+        if (minus == "-") str = "-" + str;
+
+        return str;
+    }
+
+
+
+</script>
+<main class="mb-5">
+
+    <div class="hint-modal fixed w-full inset-0 z-50   overflow-hidden flex justify-center items-center animated fadeIn faster" style="background: rgba(0,0,0,.7);">
+        <div class="shadow-lg modal-container bg-white w-10/12 shadow-lg z-50 overflow-hidden  rounded-2xl">
+            <div class="flex flex-col justify-center">
+                <div class="close-button" style="display: none;"></div>
+                <div class="flex w-full justify-center items-center p-5"><img src="/public/img/popup.png" style="width: 65%;"/></div>
+                <div class="flex w-full justify-center items-center pb-4 text-2xl font-bold color3">한눈에 보는 리뷰 키워드란?</div>
+                <div style="background:#fff url('/public/img/new_img/bg_box.jpg')">
+                    <div style="text-align: center; padding-top: 5%; padding-bottom: 5%; font-size: 12px;">
+                        <span id="popupContent" style="color:#25265e;">매장에 관련된 모든 리뷰를</br>모아 분석합니다. 빅데이터를 통해 고객 생각을</br>한 눈에 볼 수 있습니다.</span>
+                    </div>
+                    <div class="flex justify-center py-6">
+                        <button class="p-1 w-9/12 bg-purple-600 text-gray-50 text-xl rounded-full " onclick="modalClose('hint-modal')">닫기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mx-5 py-4 px-4 bg-white shadow-lg rounded-xl mt-5">
+        <div class="w-full py-4">
+                <select id="d_type" onchange="setData()"  class="mt-1 block text-xl font-bold w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm ">
+                    <option value="all" selected class="text-xl font-bold">업체 전체</option>
+                    <option value="baemin" class="text-xl font-bold">배달의민족</option>
+                    <option value="yogiyo" class="text-xl font-bold">요기요</option>
+                    <option value="coupang" class="text-xl font-bold">쿠팡이츠</option>
+                    <option value="naver" class="text-xl font-bold">네이버</option>
+                </select>
+        </div>
+        <div class="w-full py-4">
+
+            <div class="flex mt-4 mb-2 items-center">
+                <div class="flex-1 self-center text-center">
+                    <div class="flex-1 text-4xl font-bold color3" id="rating_tot_avg">0</div>
+                    <div class="self-center items-center space-x-1 ml-2 mt-2" style="text-align: center;">
+                        <div class="overflow-hidden h-2 text-xs flex " style="background: url(/public/img/delivery/star-02.png) no-repeat;  width: 89px; height: 15px;">
+                            <div id="ratingDisplay" style=" background: url(/public/img/delivery/star-05.png) no-repeat; "></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 text-center text-sm color3 mt-2"  id="rating_tot_cnt">0개</div>
+                </div>
+                <div class="w-2/3">
+                    <table class="items-center w-full border-collapse text-blueGray-700  ">
+                        <thead class="thead-light ">
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td class="border-t-0 pl-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="w-2/12 font-bold  color3">5점</span>
+                                    <div class="relative w-8/12">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                            <div id="rating_bar_5"  class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center barColor"></div>
+                                        </div>
+                                    </div>
+                                    <span class="ml-2 w-2/12 color3 text-sm" id="rating_5">0</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-t-0 pl-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap ">
+                                <div class="flex items-center">
+                                    <span class="w-2/12 font-bold  color3">4점</span>
+                                    <div class="relative w-8/12">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                            <div id="rating_bar_4" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center barColor"></div>
+                                        </div>
+                                    </div>
+                                    <span class="ml-2 w-2/12 text-sm" id="rating_4">0</span>
+
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-t-0 pl-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="w-2/12 font-bold  color3">3점</span>
+                                    <div class="relative w-8/12">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                            <div id="rating_bar_3" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center barColor"></div>
+                                        </div>
+                                    </div>
+                                    <span class="ml-2 w-2/12 color3 text-sm" id="rating_3">0</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-t-0 pl-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="w-2/12 font-bold  color3">2점</span>
+                                    <div class="relative w-8/12">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                            <div id="rating_bar_2"  class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center barColor"></div>
+                                        </div>
+                                    </div>
+                                    <span class="ml-2 w-2/12 text-sm" id="rating_2">0</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-t-0 pl-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="w-2/12 font-bold  color3">1점</span>
+                                    <div class="relative w-8/12">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                            <div id="rating_bar_1"  class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center barColor"></div>
+                                        </div>
+                                    </div>
+                                    <span class="ml-2 w-2/12 text-sm" id="rating_1">0</span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <div class="w-full">
+            <div id="chart_div"></div>
+        </div>
+
+
+    </div>
+
+    <div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl " id="wordCloud">
+        <h2 class="text-left text-lg font-bold color3 mt-5 ml-5 mb-5">
+            <div class="flex items-center justify-start">
+                <span class="text-left text-xl font-bold color3 ">한눈에 보는 리뷰 키워드</span>
+                <span class="ml-2"><img src="/public/img/Artboard.png" onclick="openModal('hint-modal');" style="width:30%;"/></span>
+            </div>
+        </h2>
+
+        <div class="rounded-xl" style="background:#fff url('/public/img/new_img/bg_box.jpg')">
+            <div class="p-3 ">
+                <img src="/wordCloud/[[ .restId]]/old_[[ .restId]].png" style="width:100%;"alt="한눈에 보는 리뷰 키워드" />
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl " id="wordCloud2">
+        <h2 class="text-left text-lg font-bold color3 mt-5 ml-5 mb-5">
+            <div class="flex items-center justify-start">
+                <span class="text-left text-xl font-bold color3 ">한눈에 보는 리뷰 키워드</span>
+                <span class="ml-2"><img src="/public/img/Artboard.png" onclick="openModal('hint-modal');" style="width:30%;"/></span>
+            </div>
+        </h2>
+
+        <div class="rounded-xl" style="background:#fff url('/public/img/new_img/bg_box.jpg')">
+            <div class="p-3 ">
+                <img src="/wordCloud/image/sample.png" style="width:100%;"alt="한눈에 보는 리뷰 키워드" />
+            </div>
+            <div class="m-4 pt-4 custom_box_botm" id="wordCloudText">
+                위 데이터는 예시입니다.</br>
+                빅데이터 분석을 위한 리뷰가 부족합니다.
+            </div>
+        </div>
+    </div>
+
+
+    <div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl" id="tips">
+        <h2 class="text-left text-lg font-bold color3 mt-5 ml-5 mb-5">
+            <div class="flex items-center justify-between">
+                <span class="text-left text-xl font-bold color3 truncate" id="tipTitle">배달 리뷰 꿀팁</span>
+                <span class="text-lg color3 px-5" style="min-width: fit-content;"><a id="tipUrl" href="#">더보기</a></span>
+            </div>
+        </h2>
+
+        <div class="rounded-xl" style="background:#fff url('/public/img/new_img/bg_box.jpg')">
+            <div class="m-4">
+                <p id="tipContents"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <!--<div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl">
+            <ul class="shadow-box">
+                <li class="relative" x-data="{selected:null}">
+                    <button type="button" class="w-full px-8 py-6 text-left" @click="selected !== 1 ? selected = 1 : selected = null">
+                        <div class="flex items-center justify-between">
+                            <span class="text-left text-xl font-bold color3 ">배달 리뷰 꿀팁</span> <span class="text-lg color3 ">더보기</span>
+                        </div>
+                    </button>
+                    <div class="relative overflow-hidden transition-all max-h-0 duration-700" x-ref="container1" x-bind:style="selected == 1 ? 'max-height: ' + $refs.container1.scrollHeight + 'px' : ''">
+                        <div class="p-6">
+                            <p>배민원을 이용하면 따뜻하게 먹을수 있다.</p>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+    </div-->
+    <div class="flex flex-col mx-5 mt-5 bg-white shadow-lg rounded-xl " data-controller="slider" id="contents">
+        <h2 class="text-left text-xl font-bold color3 mt-5 ml-5 mb-5">
+            장사에 도움되는 컨텐츠
+        </h2>
+        <div id="c_slider" class="flex overflow-x-scroll hide-scroll-bar overscroll-x-contain overflow-y-hidden ml-2 mt-2 gallery" data-slider-target="scrollContainer">
+
+        </div>
+    </div>
+    <script>
+        function accordion() {
+            return {
+                selected: null
+            }
+        }
+    </script>
+</main>
+
+<style type="text/css">
+    .gallery-item {
+        scroll-snap-align: start;
+    }
+    .gallery {
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+    .custom_box_botm {
+        border-top: 2px dashed #ddd;
+    }
+</style>
+
+
+<script type="text/javascript">
+    all_modals = ['hint-modal']
+    all_modals.forEach((modal)=>{
+        const modalSelected = document.querySelector('.'+modal);
+        modalSelected.classList.remove('fadeIn');
+        modalSelected.classList.add('fadeOut');
+        modalSelected.style.display = 'none';
+    })
+    const modalClose = (modal) => {
+       // $("html, body").removeClass("not_scroll");
+        const modalToClose = document.querySelector('.'+modal);
+        modalToClose.classList.remove('fadeIn');
+        modalToClose.classList.add('fadeOut');
+        setTimeout(() => {
+            modalToClose.style.display = 'none';
+        }, 500);
+    }
+    const openModal = (modal) => {
+        //$("html, body").addClass("not_scroll");
+        const modalToOpen = document.querySelector('.'+modal);
+        modalToOpen.classList.remove('fadeOut');
+        modalToOpen.classList.add('fadeIn');
+        modalToOpen.style.display = 'flex';
+    }
+
+</script>
+
+
+
+[[template "review_footer" .]]

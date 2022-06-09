@@ -1,0 +1,640 @@
+﻿<!--header"-->
+[[template "header" .]]
+<!--header"-->
+
+
+<main class="main-content mt-1 border-radius-lg">
+
+	<!--navar"-->
+	[[template "top_navar" .]]
+	<!--navar"-->
+
+	<script>
+		let alert = null
+		document.addEventListener("DOMContentLoaded", function () {
+			alert = new AlertModalTest("권한 수정", "변경 되었습니다.")
+			getParamsData(location.href)
+			if (sessionStorage.getItem("companyId") === "") {
+				document.getElementById('alertModalBtn').click()
+			} else {
+				getGrpBookList(1)
+			}
+
+			clickEventListener() //이벤트 정리
+		});
+
+		function getGrpBookList(pageNo) {
+			FunLoadingBarStart()
+			RequestGETApi(getGrpBookListUrl(pageNo)).then(function (data) {
+				if (data.resultCode === "00") {
+					return data.resultData
+				} else {
+					document.getElementById("listBlink").innerText = "다시 시도해주세요."
+				}
+			}).then(function (resultData) {
+				let number = 1 + getContentNumber(pageNo)
+				let html = ""
+				let noData = ""
+				if (resultData.bookList.length > 0) {
+					resultData.bookList.forEach(function (data) {
+						html += "<tr>"
+						html += "   <td class=\"align-middle text-center text-sm\">" + number + "</td>"
+						html += "   <td class=\"align-middle text-center\">"
+						html += "       <a class=\"mb-0 text-sm\" style=\"text-decoration: underline; cursor: default;\" data-bs-toggle=\"modal\" data-bs-target=\"#grpBookMod\" onclick='getGrpBookInfo(\"" + data.grpId + "\")'>" + data.grpNm + "</a>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle container\" style=\"width: 110px;\">"
+						html += "       <div class=\"row mt-2\">"
+						html += "           <div class=\"align-middle col mb-0 mt-1 p-0\" style=\"width: 50px\">"
+						html += "               <p class=\"text-sm  text-bold\">" + data.userNm + "</p>"
+						html += "           </div>"
+						html += "           <div class=\"col ms-0 mb-0 me-0 mt-0 p-0\">"
+						html += "               <div class=\"btn bg-gradient-primary ms-0 mb-0 me-0 mt-0 btn-sm\" data-bs-toggle=\"modal\" data-bs-target=\"#authorityModify\" onclick='onClickModifyAuthority(\"" + data.grpId + "\"," + "\"" + data.userId + "\")'>권한 수정</div>"
+						html += "           </div>"
+						html += "       </div>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle text-center\">"
+						html += "       <h6 class=\"mb-0 text-sm\">" + data.regDate + "</h6>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle text-center\">"
+						html += "       <h6 class=\"mb-0 text-sm\">" + data.grpUserCnt + " 명</h6>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle text-center\">"
+						html += "       <h6 class=\"mb-0 text-sm\">" + data.grpRestCnt + " 개</h6>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle text-center\">"
+						html += "       <div type='button' class=\" btn btn-sm bg-gradient-primary mt-3\" onclick='onClickLookUp(\"" + data.grpId + "\")'>조회</div>"
+						html += "   </td>"
+						html += "   <td class=\"align-middle text-center pe-4\">"
+						html += "       <div type='button' class=\" btn btn-sm bg-gradient-secondary mt-3 \" onclick='onClickDelete(\"" + data.grpId + "\")' data-bs-dismiss=\"modal\" data-bs-toggle=\"modal\" data-bs-target=\"#pop_grpDel\">삭제</div>"
+						html += "   </td>"
+						html += "</tr>"
+						number++;
+					})
+				} else {
+					noData = "데이터 없음"
+					document.getElementById("pageNav").hidden = true
+				}
+				document.getElementById("GrpBookList").innerHTML = html
+				document.getElementById("listBlink").innerText = noData
+				getPagination(resultData.totalCount, pageNo, 10, "getGrpBookList");
+				FunLoadingBarFinish()
+			})
+		}
+
+		function getGrpBookListUrl(num) {
+			return "/api/BookMngList?companyId=" + sessionStorage.getItem("companyId")
+					+ "&pageSize=10"
+					+ "&pageNo=" + num
+		}
+
+		function onClickLookUp(grpId) {
+			location.href = "/book/GrpBookUserMng?searchGrpId=" + grpId + "&sortKey=authState"
+		}
+
+		function onClickDelete(grpId) {
+			document.getElementById("delGrpId").textContent = grpId
+		}
+
+		function setAuthorityUserList(url, grpId, oldUser) {
+			RequestGETApi(url).then(function (data) {
+				getAuthorityUserList(data.resultData.bookList, grpId, oldUser)
+			})
+		}
+
+		function getAuthorityUserList(data, grpId, oldUserId) {
+			let htmlString = ""
+			for (const elementData of data) {
+				htmlString += "<tr><td class=\"align-middle text-center\"><h6 class=\"mb-0 text-sm\">" + elementData.userNm + "</h6></td>"//이름
+				htmlString += "<td class=\"align-middle text-center\"><h6 class=\"mb-0 text-sm\">" + elementData.loginId + "</h6></td>"//아이디
+				htmlString += "<td class=\"align-middle text-center\"><div type='button' class=\" btn btn-sm bg-gradient-primary mt-3\" " +
+						"onclick='onClickChangeAuthorityUser(\"" + elementData.userId + "\",\"" + grpId + "\",\"" + oldUserId + "\")'" +
+						"data-bs-dismiss=\"modal\" data-bs-toggle=\"modal\" data-bs-target=\"#AlertModel\">변경</div></td></tr>"//비고
+			}
+
+			document.getElementById("AuthorityModalBody").innerHTML = htmlString
+		}
+
+		function onClickChangeAuthorityUser(newUserId, grpId, oldUserId) {
+			RequestPUTApi("/api/BookMngChange", {
+				companyId: sessionStorage.getItem("companyId"),
+				grpId: grpId,
+				userId: oldUserId,
+				newUserId: newUserId
+			}).then(function (data) {
+				alert.setModalContent("권한 수정", (data.resultCode === "00") ? "변경 되었습니다." : "다시 시도해주세요.")
+			})
+		}
+
+		function onClickModifyAuthority(grpId, userId) {
+			let url = "/api/BookUserChangeList?" +
+					"companyId=" + sessionStorage.getItem("companyId") +
+					"&userId=" + userId +
+					"&search=userNm" +
+					"&searchGrpAuth=1" +
+					"&searchGrpAuthStat=1" +
+					"&searchGrpId=" + grpId +
+					"&searchKey=" + getSelectorOptionValue("modalSelect") +
+					"&searchKeyword=" + document.getElementById("searchKeyword").textContent
+			setAuthorityUserList(url, grpId, userId)
+		}
+
+		function onChangeLimitAmtYN(object) {
+			let index = object.selectedIndex //현재 select의 선택된 값 찾기
+			let value = object[index].value //텍스트 필드 값 들고옴
+			if (value === "N") {
+				document.getElementById("monthAmt").disabled = "disabled"
+				document.getElementById("oneUseAmt").disabled = "disabled"
+				document.getElementById("dayUseAmt").disabled = "disabled"
+			} else {
+				document.getElementById("monthAmt").disabled = ""
+				document.getElementById("oneUseAmt").disabled = ""
+				document.getElementById("dayUseAmt").disabled = ""
+			}
+		}
+
+		function clickEventListener() { //이벤트 통합관리
+			window.document.addEventListener('click', function (event) {
+				switch (event.target.id) {
+					case "btn_grpBookAdd_modal_add":
+						onClickAddGrpBook()
+						break
+					case "btn_grpBookAdd_modal_cancel":
+						document.getElementById("grpBookNm").value = ""
+						document.getElementById("oneUseAmt").value = ""
+						document.getElementById("dayUseAmt").value = ""
+						document.getElementById("monthAmt").value = ""
+						document.getElementById("intro").value = ""
+
+						let select = document.getElementById("limitAmtYN")
+						select[0].selected = true
+						onChangeLimitAmtYN(select)
+
+						document.getElementById("detailViewYn")[0].selected = true
+
+						break
+					case "modelGrpBookModCancel":
+						document.getElementById("modalGrpBookLimitYn").value = ""
+						document.getElementById("modalGrpBookGrpId").value = ""
+						document.getElementById("modalGrpBookNm").value = ""
+						document.getElementById("modalGrpBookMonthAmt").value = ""
+						document.getElementById("modalGrpBookOneUseAmt").value = ""
+						document.getElementById("modalGrpBookDayAmt").value = ""
+						document.getElementById("modalGrpBookIntro").value = ""
+						break
+					case "modelGrpBookModCommit":
+						RequestPUTApi("/api/BookInfoUpdate", {
+							grpId: document.getElementById("modalGrpBookGrpId").value,
+							grpNm: document.getElementById("modalGrpBookNm").value,
+							grpTypeCd: getSelectorOptionValue("modalGrpBookCategory"),
+							limitAmt: document.getElementById("modalGrpBookOneUseAmt").value,
+							limitDayAmt: document.getElementById("modalGrpBookDayAmt").value,
+							supportAmt: document.getElementById("modalGrpBookMonthAmt").value,
+							detailViewYn: getSelectorOptionValue("modalGrpBookDetail"),
+							limitYn: document.getElementById("modalGrpBookLimitYn").value,
+							supportYn: getSelectorOptionValue('modalGrpBookUse'),
+							intro: document.getElementById("modalGrpBookIntro").value,
+						}).then(function (data) {
+							alert.setModalContent("장부수정", (data.resultCode === "00")
+									? "수정되었습니다."
+									: "다시 시도해주세요.")
+						})
+						break
+					case "modalSearchBtn":
+
+						setAuthorityUserList("/api/BookUserChangeList?" +
+								"companyId=" + sessionStorage.getItem("companyId") +
+								"&searchKey=" + getSelectorOptionValue("modalSelect") + //셀렉트에서 값 가져옴
+								"&searchKeyword=" + document.getElementById("modalSearch").value
+						)
+
+						document.getElementById("modalSearch").value = ""
+
+						break
+
+					case "modelGrpBookDelCommit":
+						RequestPUTApi("/api/DelGrpBook", {
+							grpId: document.getElementById("delGrpId").textContent
+						}).then(function (data) {
+							alert.setModalContent("장부 삭제", (data.resultCode === "00") ? "장부가 삭제 되었습니다." : "다시 시도해주세요.")
+						})
+						break
+				}
+			})
+		}
+
+		function onClickAddGrpBook() {
+
+			let supportAmt = document.getElementById("monthAmt").value
+			let limitAmt = document.getElementById("oneUseAmt").value
+			let limitDayAmt = document.getElementById("dayUseAmt").value
+			let supportYn = getSelectorOptionValue("limitAmtYN")
+
+			if (supportYn === "N") {
+				limitAmt = "0"
+				limitDayAmt = "0"
+				supportAmt = "0"
+			}
+
+			let limitYn = (limitAmt !== "0" || limitAmt !== "") ? "Y" : "N"
+
+			RequestPOSTApi("/api/AddGrpBook", {
+				companyId: sessionStorage.getItem("companyId"),
+				intro: document.getElementById("intro").value,
+				detailViewYn: getSelectorOptionValue("detailViewYn"),
+				grpNm: document.getElementById("grpBookNm").value,
+				grpTypeCd: getSelectorOptionValue("grpBookPurpose"),
+				supportYn: supportYn, //사용제한 설정
+				supportAmt: supportAmt, //월 사용한도
+				limitAmt: limitAmt, //일회 사용한도
+				limitDayAmt: limitDayAmt, //일 사용한도
+				limitYn: limitYn, //1인당 사용금액 제한 여부
+			}).then(function (data) {
+				alert.setModalContent("장부추가", (data.resultCode === "00")
+						? "추가되었습니다."
+						: (supportAmt || limitAmt || limitDayAmt || document.getElementById("grpBookNm").value) ? "빈 항목이 있습니다." : "다시 시도해주세요.")
+			})
+		}
+
+		function getGrpBookInfo(grpId) {
+			RequestGETApi("/api/BookInfo?"
+					+ "companyId=" + sessionStorage.getItem("companyId")
+					+ "&searchGrpId=" + grpId
+			).then(function (data) {
+				if (data.resultCode === "00") {
+					return data.resultData.grpBookData
+				}
+			}).then(function (data) {
+				document.getElementById("modalGrpBookLimitYn").value = data.limitYn
+				document.getElementById("modalGrpBookGrpId").value = grpId
+				document.getElementById("modalGrpBookNm").value = data.grpNm
+
+				getSelectorOptionIndex("modalGrpBookDetail", data.detailViewYn)
+				getSelectorOptionIndex("modalGrpBookUse", data.supportYn)
+				useCheck(document.getElementById("modalGrpBookUse"))
+				getSelectorOptionIndex("modalGrpBookCategory", data.grpTypeCd)
+
+				document.getElementById("modalGrpBookMonthAmt").value = data.supportAmt
+				document.getElementById("modalGrpBookOneUseAmt").value = data.limitAmt
+				document.getElementById("modalGrpBookDayAmt").value = data.limitDayAmt
+				document.getElementById("modalGrpBookIntro").value = data.intro
+			})
+		}
+
+		function useCheck(object) {
+			let index = object.selectedIndex //현재 select의 선택된 값 찾기
+			let useYn = object[index].value
+			if (useYn === 'N') {
+				document.getElementById("modalGrpBookMonthAmt").disabled = "disabled"
+				document.getElementById("modalGrpBookOneUseAmt").disabled = "disabled"
+				document.getElementById("modalGrpBookDayAmt").disabled = "disabled"
+			} else {
+				document.getElementById("modalGrpBookMonthAmt").disabled = ""
+				document.getElementById("modalGrpBookOneUseAmt").disabled = ""
+				document.getElementById("modalGrpBookDayAmt").disabled = ""
+			}
+		}
+
+	</script>
+
+	<div hidden>
+		<button id="alertModalBtn" data-bs-toggle="modal" data-bs-target="#AlertModel2"></button>
+	</div>
+
+	<nav aria-label="breadcrumb" id="RouteNav">
+		<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+			<li class="breadcrumb-item text-sm text-dark active" aria-current="page">장부관리</li>
+			<li class="breadcrumb-item text-sm font-weight-bolder">
+				<a class="opacity-5 text-dark" href="javascript:location.reload()">장부 리스트</a>
+			</li>
+		</ol>
+	</nav>
+
+	<!--컨테이너-->
+	<div class="container-fluid py-4">
+
+		<!--카드헤더-->
+		<div class="card-header-new pb-0 mb-2">
+			<div class="row">
+				<div class="col-md-2 mt-2">
+					<h5>장부 리스트</h5>
+				</div>
+
+				<div class="col-md-2">
+					<div class="form-group">
+						<div class="input-group input-group-alternative mb-4">
+							<button type="button" class="btn bg-gradient-primary" data-bs-toggle="modal"
+									data-bs-target="#pop_grpAdd">장부 추가
+							</button>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+
+		<!--카드 바디-->
+		<div class="col-12 card mb-4">
+			<div class="card-body px-0 pt-0 pb-2">
+				<div class="table-responsive p-0">
+					<br>
+					<table class="table align-items-center mb-0">
+						<!--리스트 헤더-->
+						<thead id="GrpBookHeader">
+						<tr>
+							<th class="text-center text-xs font-weight-bolder opacity-7">No.</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">장부명</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">장부관리자</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">생성일</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">장부원수</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">가맹점수</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7">사용자관리</th>
+							<th class="text-center text-xs font-weight-bolder opacity-7 pe-5">비고</th>
+						</tr>
+						</thead>
+						<!--리스트 본문-->
+						<tbody id="GrpBookList"></tbody>
+					</table>
+
+					<p class="text-center text-s font-weight-bold mb-3 mt-2" id="listBlink"></p>
+				</div>
+				<!--페이지-->
+				<nav id="pageNav"></nav>
+			</div>
+		</div>
+
+	</div>
+
+
+	<!--모달 장부추가-->
+	<div class="modal fade" id="pop_grpAdd" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">장부 추가</h5>
+				</div>
+				<div class="modal-body">
+					<form>
+						<ul class="list-group">
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm col-md-4">
+								<label class="text-sm" for="grpBookPurpose">장부용도</label>
+								<div class="input-group input-group-alternative col-1 mb-4">
+									<select class="form-control" id="grpBookPurpose">
+										<option value="1" selected>회사</option>
+									</select>
+								</div>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm ">
+								<label class="text-sm" for="grpBookNm">장부명</label>
+								<input type="text" class="form-control" value="" id="grpBookNm">
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<label class="text-sm" for="detailViewYn">장부 상세보기 가능여부</label>
+								<div class="input-group input-group-alternative mb-4">
+									<select class="form-control" id="detailViewYn">
+										<option value="Y">가능</option>
+										<option value="N">불가능</option>
+									</select>
+								</div>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<label class="text-sm" for="limitAmtYN">사용제한설정</label>
+								<div class="input-group input-group-alternative mb-4">
+									<select class="form-control" id="limitAmtYN" onchange="onChangeLimitAmtYN(this)">
+										<option value="N">미사용</option>
+										<option value="Y">사용</option>
+									</select>
+								</div>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<label class="text-sm" for="monthAmt">월 사용한도</label>
+								<input type="number" class="form-control" value="" id="monthAmt" disabled/>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<label class="text-sm" for="oneUseAmt">1회 사용한도</label>
+								<input type="number" class="form-control" value="" id="oneUseAmt" disabled/>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<label class="text-sm" for="dayUseAmt">일 사용한도</label>
+								<input type="number" class="form-control" value="" id="dayUseAmt" disabled/>
+							</li>
+							<li class="list-group-item border-0 ps-0 pt-0 text-sm">
+								<br>
+								<label class="text-sm" for="intro">장부설명</label>
+								<textarea class="form-control" id="intro" style="resize: none;"></textarea>
+							</li>
+						</ul>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn bg-gradient-secondary" id="btn_grpBookAdd_modal_cancel"
+							data-bs-dismiss="modal">취소
+					</button>
+					<button type="button" class="btn bg-gradient-primary" id="btn_grpBookAdd_modal_add"
+							data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#AlertModel">추가
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!--모달 권한수정-->
+	<div class="modal fade" id="authorityModify" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">권한 수정</h5>
+				</div>
+
+				<div class="modal-body">
+					<div class="container mt-2">
+						<div class="row">
+							<div class="col ms-2"> <!--셀렉트-->
+								<div class="input-group input-group-alternative mb-4">
+									<select class="form-control" id='modalSelect'>
+										<option value="userNm">이름</option>
+										<option value="loginId">아이디</option>
+										<option value="userHp">전화번호</option>
+									</select>
+								</div>
+							</div>
+							<div class="col-sm">
+								<input type="text" class="form-control" value="" placeholder="사용자 겁색" id="modalSearch">
+							</div>
+							<div class="col-sm">
+								<div class="text-sm btn-sm btn bg-gradient-primary" id="modalSearchBtn">검색
+								</div> <!--버튼-->
+							</div>
+							<div id="searchKeyword" hidden></div>
+						</div>
+
+					</div>
+
+					<div class="table-responsive p-0">
+						<table class="table align-items-center mb-0">
+							<thead id="AuthorityModalHeader">
+							<tr>
+								<th class="text-center text-xs font-weight-bolder ps-2">이름</th>
+								<th class="text-center text-xs font-weight-bolder ps-2">아이디</th>
+								<th class="text-center text-xs font-weight-bolder ps-2">비고</th>
+							</tr>
+							</thead>
+
+							<tbody id="AuthorityModalBody"></tbody>
+
+						</table>
+					</div>
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">취소</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!--모달장부수정-->
+	<div class="col-md-4">
+		<div class="modal fade" id="grpBookMod" tabindex="-1" role="dialog" aria-hidden="true"
+			 data-bs-backdrop="static">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content">
+					<div class="modal-header"><h5 class="modal-title" id="modelGrpBookTitle">장부 수정</h5></div>
+					<div class="modal-body">
+
+						<input type="hidden" class="class" id="modalGrpBookGrpId" value="">
+						<input type="hidden" class="class" id="modalGrpBookLimitYn" value="">
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>장부명</strong></div>
+							<div class="col-8">
+								<input class="cBorder" id="modalGrpBookNm" disabled>
+							</div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>장부용도</strong></div>
+							<div class="col-8">
+								<select class="form-control cBorder" id="modalGrpBookCategory">
+									<option value="1">회사</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>장부 상세보기 여부</strong></div>
+							<div class="col-8">
+								<select class="form-control cBorder" id="modalGrpBookDetail">
+									<option value="Y">가능</option>
+									<option value="N">불가능</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>사용제한 설정</strong></div>
+							<div class="col-8">
+								<select class="form-control cBorder" id="modalGrpBookUse"
+										onchange="useCheck(this)">
+									<option value="Y">사용</option>
+									<option value="N">미사용</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>월 사용한도</strong></div>
+							<div class="col-7">
+								<input type="number" class="cBorder" id="modalGrpBookMonthAmt">
+							</div>
+							<div class="col-1 mt-2"><h6>원</h6></div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>1회 사용금액</strong></div>
+							<div class="col-7">
+								<input type="number" class="cBorder" id="modalGrpBookOneUseAmt">
+							</div>
+							<div class="col-1 mt-2"><h6>원</h6></div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2"><strong>일 사용한도</strong></div>
+							<div class="col-7">
+								<input type="number" class="cBorder" id="modalGrpBookDayAmt">
+							</div>
+							<div class="col-1 mt-2"><h6>원</h6></div>
+						</div>
+
+						<div class="row ms-2 me-2 mb-3">
+							<div class="col-4 mt-2 mb-2"><strong>장부 설명</strong></div>
+							<div class="col-12">
+                                <textarea class="cBorder text-sm" id="modalGrpBookIntro"
+										  style="height: 100px; line-height: 1.5em"></textarea>
+							</div>
+						</div>
+
+					</div>
+
+					<div class="modal-footer">
+						<button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal"
+								id="modelGrpBookModCancel">취소
+						</button>
+						<button type="button" class="btn bg-gradient-primary" data-bs-dismiss="modal"
+								id="modelGrpBookModCommit" data-bs-toggle="modal" data-bs-target="#AlertModel">수정
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="pop_grpDel" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-header"><h5 class="modal-title">장부 삭제</h5></div>
+				<div class="modal-body">
+					<div id="delGrpId" hidden></div>
+					<div>해당 장부를 삭제하시겠습니까?</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal"
+							id="modelGrpBookDelCancel">취소
+					</button>
+					<button type="button" class="btn bg-gradient-danger" data-bs-dismiss="modal"
+							id="modelGrpBookDelCommit" data-bs-toggle="modal" data-bs-target="#AlertModel">삭제
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-4">
+		<div class="modal fade" id="AlertModel2" tabindex="-1" role="dialog" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="AlertModelTitle2">오류</h5>
+					</div>
+					<div class="modal-body">
+						<p class="mb-0" id="modalContent2">회사를 선택해주세요</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn bg-gradient-primary" data-bs-dismiss="modal"
+								id="AlertModelCommit2">확인
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</main>
+
+
+<!--footer"-->
+[[template "footer" .]]
+<!--footer"-->
+

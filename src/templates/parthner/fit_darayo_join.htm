@@ -1,0 +1,90 @@
+﻿<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<body class="no_bg">
+<script>
+
+
+	function emailDupChk(obj){
+		str = obj.value;
+		let email= str;
+		fetch('/api/cash/emailCheck?email='+email).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+			if (res.resultCode == "00"){
+				document.getElementById("emailDupCheckYn").value="Y";
+			}else if (res.resultCode == "01"){
+				document.getElementById("emailErr").style.display="block";
+				document.getElementById("emailErr").innerText="* 이미 사용중인 Email 주소입니다."
+				document.getElementById("emailDupCheckYn").value="N";
+				return;
+			}else if (res.resultCode == "99"){
+				document.getElementById("emailDupCheckYn").value="N";
+				document.getElementById("emailErr").innerText="* 올바른 이메일 형식이 아닙니다.";
+				return;
+			}else{
+				alert("통신 오류");
+				return;
+			}
+		});
+	}
+
+
+</script>
+
+<div class="fix_width">
+	<div class="login_tit">회원가입</div>
+	<ul class="login_cont">
+		<form>
+			<input type="hidden" id="smsCheckYn" value="N" >
+			<input type="hidden" id="emailCheckYn" value="N" >
+			<input type="hidden" id="emailDupCheckYn" value="N" >
+
+		<li>아이디 (이메일)</li>
+		<li><input type="text"  id="lid" placeholder="parkgifdong.gmail.com"  onkeydown="emailChk(this)"  onfocusout="emailDupChk(this);"/></li>
+		<li>
+			<div class="mbotm15 red tit11" id="emailErr"></div>
+		</li>
+		<li>이름</li>
+		<li class="ph_mb"><input type="text" id="lname" placeholder="홍길동" />
+			<div class="mbotm15 red tit11" id="nameErr"></div>
+		</li>
+		<li>생년월일</li>
+		<li class="ph_mb"><input type="number" id="lbirthDay" placeholder="1981.11.01 숫자만 입력" />
+			<div class="mbotm15 red tit11" id="birthDayErr"></div>
+		</li>
+
+		<li>전화번호</li>
+		<li class="ph_ma">
+			<input type="number" id="lhpNo" placeholder="010 1234 5678" class="inp_phone" />
+			<input type="button" id="lhpNoBtn" value="인증 요청" onclick="smsReq();"   class="btn_phone" />
+		</li>
+		<li>
+				<div class="mbotm15 red tit11" id="smsErr"></div>
+		</li>
+		<li class="ph_mb" id="smsLi" style="display: none;">
+			<input type="number" id="smsConfirm" placeholder="인증번호 입력" class="inp_phone" />
+			<input type="button" id="smsConfirmBtn" onclick="smsCheck();" value="인증 확인" class="btn_phone"/>
+		</li>
+		<li>비밀번호</li>
+		<li><input type="password" id="lpw" onkeydown="pwdChk(this)" placeholder="영문, 숫자 포함 총 8자리" autocomplete="off"/></li>
+		<li>
+			<div class="mbotm15 red tit11" id="pwdErr"></div>
+		</li>
+		<li><input type="button" name="" onclick="joinOk();" value="동의하고 가입하기" class="btn_login" /></li>
+		<li>
+			<div class="mbotm20 agnc gray6">
+				본인은 만 14세 이상이며, 달아요 캐시 서비스의
+				<span class="vblue uline">
+				<a href="https://darayocash.imweb.me/service_agree">이용약관</a>
+				<a href="https://darayocash.imweb.me/privacy_agree">, 개인정보 수집 및 이용</a>
+				<a href="https://darayocash.imweb.me/sales_agree">, 매출정보 수집 및 제공 동의</a>
+				</span> 내용을 확인하였으며 이에 동의합니다.
+			</div>
+		</li>
+		</form>
+	</ul>
+</div>
+
+</body>
+</html>

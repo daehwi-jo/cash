@@ -1,0 +1,134 @@
+﻿<!--header"-->
+[[template "header_pos" .]]
+<!--header"-->
+<body class="no_bg">
+<script type="text/javascript">
+	//console.log(sessionStorage.getItem('userId'));
+
+	if (sessionStorage.getItem('storeId')==null){
+		location.href="/parthner/p/login"
+	}
+
+	function goCardSales(){
+		var openNewWindow = window.open("about:blank");
+		openNewWindow.location.href = "https://www.cardsales.or.kr/page/member/join/joinForm";
+	}
+
+	function goHometax(){
+		var openNewWindow = window.open("about:blank");
+		openNewWindow.location.href = "https://www.hometax.go.kr/websquare/websquare.wq?w2xPath=/ui/pp/index_pp.xml";
+	}
+	function goNextCert(){
+		location.href = "/parthner/p/guideCertify";
+	}
+
+	function  joinStep2_OK() {
+
+		let lnId = document.getElementById("lnId").value;
+		let lnPsw = document.getElementById("lnPsw").value;
+		let hometaxId = document.getElementById("hometaxId").value;
+		let hometaxPsw = document.getElementById("hometaxPsw").value;
+
+		document.getElementById("lnIdErr").innerText="";
+		document.getElementById("lnErr").innerText="";
+		document.getElementById("hometaxErr").innerText="";
+
+
+
+		if (lnId == ""){
+			document.getElementById("lnIdErr").style.display="block";
+			document.getElementById("lnIdErr").innerText="* 여신협회 아이디를 입력해주세요.";
+			document.getElementById("lnId").focus();
+			return;
+		}
+
+		if (lnPsw == ""){
+			document.getElementById("lnErr").style.display="block";
+			document.getElementById("lnErr").innerText="* 여신협회 비밀번호를 입력해주세요.";
+			document.getElementById("lnPsw").focus();
+			return;
+		}
+
+		if (hometaxId !="" && hometaxPsw == ""){
+			document.getElementById("hometaxErr").style.display="block";
+			document.getElementById("hometaxErr").innerText="* 홈택스 비밀번호를 입력해주세요.";
+			document.getElementById("hometaxPsw").focus();
+			return;
+		}
+
+
+		let storeId = sessionStorage.getItem('storeId')
+
+		let sendData = {
+			storeId: storeId,
+			compNm: sessionStorage.getItem('storeNm'),
+			bizNum: sessionStorage.getItem('bizNum'),
+			lnId: lnId,
+			lnPsw: lnPsw,
+			hometaxId: hometaxId,
+			hometaxPsw: hometaxPsw
+		};
+		var opts = {method: 'POST', body: JSON.stringify(sendData), headers: {"Content-Type": "application/json"}};
+		fetch('/api/cash/cashJoin', opts).then(function(response) {
+			return response.json();
+		}).then(function(res) {
+
+			//console.log(res)
+			if (res.resultCode == "00"){
+				location.href="/parthner/p/guidePartner";
+			}else if (res.resultCode == "99"){
+				alert(res.resultMsg);
+				return;
+			}else{
+				alert("관리자에게 문의하세요.");
+				return;
+			}
+		});
+	}
+
+</script>
+<div class="fix_width">
+	<div class="login_tit">인증하기</div>
+	<form>
+	<ul class="login_cont">
+
+		<li>
+			<div class="mbotm20 agnc gray6">
+				카드 매출 분석 및 예측 서비스를 위해<br /><b>필수적으로 여신금융협회</b>의 아이디/비밀번호가 필요하며, <br /><b>홈택스</b> 정보 저장시 <b>현금 매출도 함께</b> 서비스 됩니다.
+			</div>
+		</li>
+		<li class="tit_certify1"></li>
+		<li>아이디</li>
+		<li class="ph_mb">
+			<input type="text" id="lnId" placeholder="여신협회 아이디 입력" />
+			<div class="mbotm15 red tit11" id="lnIdErr"></div>
+		</li>
+		<li>비밀번호</li>
+		<li>
+			<input type="text"id="lnPsw" placeholder="여신협회 비밀번호 입력"  />
+			<div class="mbotm15 red tit11" id="lnErr"></div>
+		</li>
+		<li>
+			<div class="login_lost_pss" onclick="goCardSales();">회원가입하러 가기</div>
+		</li>
+		<li class="tit_certify2"></li>
+		<li>아이디</li>
+		<li class="ph_mb"><input type="text" id="hometaxId" placeholder="홈텍스 아이디 입력" /></li>
+		<li>비밀번호</li>
+		<li>
+			<input type="text" id="hometaxPsw" placeholder="홈텍스 비밀번호 입력" />
+			<div class="mbotm15 red tit11" id="hometaxErr"></div>
+
+		</li>
+		<li>
+			<div class="login_lost_pss" onclick="goHometax();">회원가입하러 가기</div>
+		</li>
+		<li><input type="button"  onclick="joinStep2_OK();" value="인증하기" class="btn_login" /></li>
+		<li><input type="button"  onclick="goNextCert();" value="다음에 인증하기" class="btn_join" /></li>
+
+	</ul>
+	</form>
+</div>
+
+</body>
+</html>

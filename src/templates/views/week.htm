@@ -1,0 +1,898 @@
+﻿<!--header"-->
+[[template "header" .]]
+<!--header"-->
+<style>
+	.li_padding {
+		padding-top: 0.6em;
+		padding-bottom: 0.6em;
+		width: 30%;
+	}
+
+	table {
+		border-collapse: separate;
+		border-spacing: 0 15px;
+	}
+
+	.ptopEm { padding-top:7em; }
+
+</style>
+<body>
+
+<script type="text/javascript">
+	$(document).ready(function(){
+
+		var bizNum = [[ .bizNum]];
+
+		var t = new Date();
+		var dayIndex = t.getDay();
+
+
+		if (dayIndex == 1){ // 월
+			$('#day1').val('1').prop("selected",true);
+		}else if(dayIndex == 2){
+			$('#day2').val('2').prop("selected",true);
+		}else if(dayIndex == 3){
+			$('#day3').val('3').prop("selected",true);
+		}else if(dayIndex == 4){
+			$('#day4').val('4').prop("selected",true);
+		}else if(dayIndex == 5){
+			$('#day5').val('5').prop("selected",true);
+		}else if(dayIndex == 6){
+			$('#day6').val('6').prop("selected",true);
+		}else{ //일
+			$('#day0').val('0').prop("selected",true);
+		}
+
+
+		weekSales(bizNum);
+		weekCompare(dayIndex, bizNum);
+	});
+
+	$(window).bind("orientationchange", function(e) { // 가로세로 전환 처리
+		location.reload(); // 새로고침
+	});
+
+	//var keywordTile = "";
+
+	function popup(flag){
+
+		// 고객님 방문 분석
+		if(flag==1){
+			$('#popupTitle').text("고객 방문 분석이란?");
+			$('#popupContent').html("<strong>지난주 가장 바쁘셨던 요일과 시간을</strong></br>표기합니다. 일손이 부족하면 <strong>이 시간대</br>채용을 고려</strong>해 보세요.");
+		}else if(flag==2){
+			$('#popupTitle').text("지난주 취소 분석이란?");
+			//$('#popupContent').text("특이사항 취소 내역을 한눈에 보며, 상세 내용은 파트너 웹에서 확인 할 수 있습니다. (달아요 캐시 홈페이지 참조)");
+			$('#popupContent').html('<strong>지난주 카드 부정사용 의심 내역을</strong></br>알려드립니다. 각 취소의 <strong>상세 내역은</br>파트너웹을 참조</strong>하세요.');
+		}else if(flag==5){
+			$('#popupTitle').html("사장님만 보는 <img src='/public/img/check.png' style='width:5%; vertical-align: top;'/>관심 리뷰란?");
+			//$('#popupContent').text("사용하고 있는 배달업체에서 작성된 모든 리뷰를 파트너 웹에서 설정한 조건에 맞춰 표시한 내용입니다.");
+			$('#popupContent').html("<strong>사장님이 설정한 키워드나 평점을 통해 지난 주</br>리뷰를 관리</strong> 할 수 있습니다. 자세한 설정은</br><strong>설정 > 리뷰정보를 참조</strong>하세요.");
+		}else if(flag==6){
+			$('#popupTitle').html("<img src='/public/img/check.png' style='width:5%; vertical-align: top;'/>관심 리뷰 작성자 분석이란?");
+			//$('#popupContent').text("파트너 웹에서 설정한 조건을 통해 검색된 리뷰 작성자가 신규, 단골 고객인지 분석한 내용입니다.");
+			$('#popupContent').html("<strong>특정 키워드나 평점을 작성한 사용자를 분석</strong></br>합니다. 작성자가 <strong>어떤 유형의</br>고객</strong>인지 확인 해보세요.");
+		}
+
+		toggleModal();
+	}
+
+	function chartHoriStyle(id, max, tmpArray){
+		for(var i=0; i<tmpArray.length; i++){
+			chartHeight = Math.ceil((tmpArray[i] / max * 100)*2/3); // 실제 비율의 75% 표현
+
+
+			$('#'+id+(i+1)+'Grap').css('width',chartHeight +'%')
+		}
+	}
+
+		// 숫자 3자리씩 콤마 출력
+	function addComma(num) {
+	var regexp = /\B(?=(\d{3})+(?!\d))/g;
+	return num.toString().replace(regexp, ',');
+	}
+
+	var line3=1;
+	var line6=2;
+	var line9=3;
+	var line12=4;
+	var line15=5;
+	var line18=6;
+	var line21=7;
+	var line24=7;
+	var maxValueAxis=30;
+
+	var line06=1;
+	var line611=1;
+	var line1114=1;
+	var line1417=1;
+	var line1724=1;
+
+
+	google.charts.load("current", {packages:["corechart"]});
+
+	function drawVisualization() {
+				// Some raw data (not necessarily accurate)
+				var data = google.visualization.arrayToDataTable([
+					['Time', '금액'],
+					['3', line3],
+					['6', line6],
+					['9', line9],
+					['12',line12],
+					['15',line15],
+					['18',line18],
+					['21',line21],
+					['24',line24]
+				]);
+				
+				var options = {
+					//title : 'Monthly Coffee Production by Country',
+					//vAxis: {title: 'Cups'},
+					//hAxis: {title: 'Month'},
+					vAxis: { minValue: 0, maxValue: maxValueAxis},	// 데이터에 상관없이 그래프 최대값 설정
+					legend: { position: 'none' },	// 각데이터 주석 left, right, bottom
+					chartArea: {left:80,right:20,top:20,bottom:25},
+		
+					//seriesType: 'bars',
+					//series: {5: {type: 'line'}}, // 5번째 데이터만 LINE형식
+					seriesType: 'line',
+					backgroundColor: 'none',
+					tooltip: {trigger: 'selection'},
+					
+					lineWidth: 1,
+					colors: ['#7951fe'],
+					pointSize: 5,
+					pointShape: 'circle'
+				};
+				
+				var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+				chart.draw(data, options);
+				chart.setSelection([{row:6,column:1}]);
+	}
+
+	/*
+	function drawVisualization2() {
+		// Some raw data (not necessarily accurate)
+		var data = google.visualization.arrayToDataTable([
+			['Time', '금액'],
+			['새벽(0~6)', line06],
+			['아침(6~11)', line611],
+			['점심(11~14)', line1114],
+			['오후(14~17)',line1417],
+			['저녁(17~24)',line1724]
+		]);
+
+		var options = {
+			//title : 'Monthly Coffee Production by Country',
+			//vAxis: {title: 'Cups'},
+			//hAxis: {title: 'Month'},
+			vAxis: { minValue: 0, maxValue: maxValueAxis},	// 데이터에 상관없이 그래프 최대값 설정
+			legend: { position: 'none' },	// 각데이터 주석 left, right, bottom
+			chartArea: {left:80,right:20,top:20,bottom:25},
+
+			//seriesType: 'bars',
+			//series: {5: {type: 'line'}}, // 5번째 데이터만 LINE형식
+			seriesType: 'line',
+			backgroundColor: 'none',
+
+			lineWidth: 1,
+			colors: ['#7951fe'],
+			pointSize: 5,
+			pointShape: 'circle'
+		};
+
+		var chart = new google.visualization.ComboChart(document.getElementById('chart_div2'));
+		chart.draw(data, options);
+	}
+	 */
+
+	var okCancle=0;
+	var timeCancle=0;
+	var dayCancle=0;
+	var nightCancle=0;
+	var noCancle=0;
+
+	// Callback that creates and populates a data table,
+	// instantiates the pie chart, passes in the data and
+	// draws it.
+	function drawChart2() {
+
+		// Create the data table.
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Topping');
+		data.addColumn('number', 'Slices');
+		data.addRows([
+			['결제 취소', okCancle],
+			['시간 취소', timeCancle],
+			['일 취소', dayCancle],
+			['심야 취소', nightCancle],
+			['미 승인 취소', noCancle]
+		]);
+
+		// Set chart options
+		var options = {//'title':'Cancel Pie Graph',
+			chartArea: {left:10,right:5,top:5,bottom:5},
+			backgroundColor: 'none',
+			pieHole: 0.2,
+			colors: ['#d31f2e', '#fac136', '#ed8339', '#7c6d87', '#50b0c9'],
+			tooltip: { trigger: 'selection' },
+			//legend: { position: 'none' },
+			//'width':600,
+			//'height':400
+			};
+
+		// Instantiate and draw our chart, passing in some options.
+		var chart = new google.visualization.PieChart(document.getElementById('chart_div1'));
+		chart.draw(data, options);
+		chart.setSelection([{row:0,column:null}]);
+	}
+
+	var okReview=0;
+	var lowReview=0;
+	var keywordReview=0;
+
+	function drawChart3() {
+
+		// Create the data table.
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Topping');
+		data.addColumn('number', 'Slices');
+		data.addRows([
+			['일반 리뷰', okReview],
+			['평점 리뷰', lowReview],
+			['키워드 리뷰', keywordReview]
+		]);
+
+		// Set chart options
+		var options = {//'title':'Cancel Pie Graph',
+			chartArea: {left:10,right:5,top:5,bottom:5},
+			backgroundColor: 'none',
+			pieHole: 0.2,
+			colors: ['#3ba0d5', '#e02936', '#fabb45'],
+			tooltip: { trigger: 'selection' },
+			//'width':600,
+			//'height':400
+			};
+
+		// Instantiate and draw our chart, passing in some options.
+		var chart = new google.visualization.PieChart(document.getElementById('chart_div3'));
+		chart.draw(data, options);
+		chart.setSelection([{row:0,column:null}]);
+	}
+
+	var newCustomer=0;
+	var oldCustomer=0;
+
+	function drawChart4() {
+
+		// Create the data table.
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Topping');
+		data.addColumn('number', 'Slices');
+		data.addRows([
+			['신규 고객', newCustomer],
+			['재방문 고객', oldCustomer]
+		]);
+
+		// Set chart options
+		var options = {//'title':'Cancel Pie Graph',
+			chartArea: {left:10,right:5,top:5,bottom:5},
+			backgroundColor: 'none',
+			pieHole: 0.2,
+			colors: ['#6d86fe', '#44e3d9'],
+			tooltip: { trigger: 'selection' },
+			//'width':600,
+			//'height':400
+		};
+
+		// Instantiate and draw our chart, passing in some options.
+		var chart = new google.visualization.PieChart(document.getElementById('chart_div4'));
+		chart.draw(data, options);
+		chart.setSelection([{row:0,column:null}]);
+	}
+
+	/*
+	google.charts.load('current', {'packages':['bar']});
+	google.charts.setOnLoadCallback(drawChart);
+
+	function drawChart() {
+		var data = google.visualization.arrayToDataTable([
+			['요일', '방문 고객'],
+			['일요일', 9],
+			['금요일', 4],
+			['목요일', 4]
+		]);
+
+		var options = {
+			//chart: {
+			//	title: 'Company Performance',
+			//	subtitle: 'Sales, Expenses, and Profit: 2014-2017',
+			//},
+			chartArea: {left:10,right:5,top:5,bottom:5},
+			backgroundColor: 'none',
+			bars: 'horizontal' // Required for Material Bar Charts.
+		};
+
+		var chart = new google.charts.Bar(document.getElementById('barchart_material'));
+
+		chart.draw(data, google.charts.Bar.convertOptions(options));
+	}
+	 */
+
+	function weekSales(bizNum) {
+		var targetUrl = "/data/week?bizNum="+bizNum
+		$.ajax({
+			type: "GET",
+			async: true,
+			url: targetUrl,
+			dataType: "json",
+			cache: false,
+			success: function(data) {
+				var maxAmt = data.resultData.maxAmt
+				var minAmt = data.resultData.minAmt
+				var avgAmt = data.resultData.avgAmt
+
+				var selectWeekTitle = data.resultData.selectWeekTitle
+				$('#selectWeekTitle').text(selectWeekTitle);
+
+				$('#min_week').text("["+data.resultData.minWeek+"]");
+				$('#max_week').text("["+data.resultData.maxWeek+"]");
+				$('#min_amt').text(addComma(minAmt));
+				$('#avg_amt').text(addComma(avgAmt));
+				$('#max_amt').text(addComma(maxAmt));
+				$('#min_chart').css('height',data.resultData.minh +'%')
+				$('#min_chart').css('top',data.resultData.mint +'%')
+				$('#avg_chart').css('height',data.resultData.avgh +'%')
+				$('#avg_chart').css('top', data.resultData.avgt +'%')
+
+
+				//<span id="visit1"></span> : <span id="visit1cnt"></span>, <span id="visit1p"></span>%</p>
+
+				var monthAmtList = [];
+				monthAmtList.push(data.resultData.weekCnt.bset0cnt)
+				monthAmtList.push(data.resultData.weekCnt.bset1cnt)
+				monthAmtList.push(data.resultData.weekCnt.bset2cnt)
+				chartHoriStyle("visit", data.resultData.weekCnt.best, monthAmtList, 3);
+
+				$('#visit1Day').text(data.resultData.weekCnt.bset0dayName);
+				$('#visit1').text(data.resultData.weekCnt.bset0tr_tm);
+				//$('#visit1Cnt').text(data.resultData.weekCnt.bset0cnt);
+
+				$('#visit2').text(data.resultData.weekCnt.bset1tr_tm);
+				$('#visit2Day').text(data.resultData.weekCnt.bset1dayName);
+				//$('#visit2Cnt').text(data.resultData.weekCnt.bset1cnt);
+
+				$('#visit3').text(data.resultData.weekCnt.bset2tr_tm);
+				$('#visit3Day').text(data.resultData.weekCnt.bset2dayName);
+				//$('#visit3Cnt').text(data.resultData.weekCnt.bset2cnt);
+
+				//$('#visit1cnt').text(data.resultData.weekCnt.bset0cnt);
+				//$('#visit23cnt').text(data.resultData.weekCnt.bset1cnt);
+				//$('#visit4cnt').text(data.resultData.weekCnt.bset2cnt);
+				//$('#visit1p').text(data.resultData.weekCnt.bset0cntp);
+				//$('#visit23p').text(data.resultData.weekCnt.bset1cntp);
+				//$('#visit4p').text(data.resultData.weekCnt.bset2cntp);
+
+				$('#visitTotal').text(addComma(data.resultData.weekCnt.tot_cnt));
+				$('#personPrice').text(addComma(data.resultData.weekCnt.avg_cnt));
+
+				//$('#darayoTipMsg').html(data.resultData.darayoTip.darayoTipMsg);
+				//$('#workbusyMsg').html(data.resultData.darayoTip.workBusyMsg);
+				//$('#holybusyMsg').html(data.resultData.darayoTip.holyBusyMsg);
+
+				// 웹뷰 컨텐츠
+				$('#conTitle-1').html("<a href='#'>"+data.resultData.webView.conTitle1+'</a>');
+				$('#conBody-1').html(data.resultData.webView.conBody1);
+				$('#conTitle-2').html("<a href='#'>"+data.resultData.webView.conTitle2+'</a>');
+				$('#conBody-2').html(data.resultData.webView.conBody2);
+
+				if(data.resultData.cancle.result == "y"){
+					okCancle = parseInt(data.resultData.cancle.okCancle);
+					timeCancle = parseInt(data.resultData.cancle.timeCancle);
+					dayCancle = parseInt(data.resultData.cancle.dayCancle);
+					nightCancle = parseInt(data.resultData.cancle.nightCancle);
+					noCancle = parseInt(data.resultData.cancle.noCancle);
+
+					$('#okCancle').text(okCancle);
+					$('#timeCancle').text(timeCancle);
+					$('#dayCancle').text(dayCancle);
+					$('#nightCancle').text(nightCancle);
+					$('#noCancle').text(noCancle);
+
+					$('#cancleN').css('display','none');
+
+					// Set a callback to run when the Google Visualization API is loaded.
+					google.charts.setOnLoadCallback(drawChart2);
+				}else{
+					$('#cancleY').css('display','none');
+				}
+
+				if(data.resultData.review.result == "y"){
+
+					lowReview = parseInt(data.resultData.review.lowReview);
+					okReview = parseInt(data.resultData.review.okReview);
+					keywordReview = parseInt(data.resultData.review.keywordReview);
+
+					newCustomer = parseInt(data.resultData.review.newCustomer);
+					oldCustomer = parseInt(data.resultData.review.oldCustomer);
+
+					$('#okReview').text(okReview+lowReview+keywordReview);
+					$('#lowReview').text(lowReview);
+					$('#keywordReview').text(keywordReview);
+					$('#newCustomer').text(newCustomer);
+					$('#oldCustomer').text(oldCustomer);
+					$('#newCustomerTotal').text(data.resultData.review.newCustomerTotal);
+					$('#oldCustomerTotal').text(data.resultData.review.oldCustomerTotal);
+					$('#keyword').text(data.resultData.review.keyword);
+
+					//$('#keywordTitle').html(data.resultData.review.keywordTitle + " 키워드 분석 <img src='/public/img/Artboard.png' onclick='popup(6);' style='width:6%;'/>");
+					//keywordTile = data.resultData.review.keywordTitle + " 키워드 분석이란?"
+
+
+					google.charts.setOnLoadCallback(drawChart3);
+
+					// 파트너 가입 여부
+					if(data.resultData.partnerYN == "y"){
+
+						$('#partnerReview').css('display','none');
+
+						if (data.resultData.review.result2 == "n"){ // 요주의 리뷰 없음
+							$('#badReview').css('display','none');
+						}else if (data.resultData.review.result2 == "y"){ // 요주의 리뷰 있음
+							google.charts.setOnLoadCallback(drawChart4);
+						}
+					}else{
+						$('#badReview').css('display','none');
+					}
+
+					$('#noReview').css('display','none');
+
+				}else{
+					$('#publicReview').css('display','none');
+					//$('#publicReview2').css('display','none');
+					$('#badReview').css('display','none');
+
+					if(data.resultData.partnerYN == "y"){
+						$('#partnerReview').css('display','none');
+					}
+				}
+			},
+			error: function(xhr, status, error) {
+				//common_alert("공유 노드 할당", "관리자에게 문의 하세요");
+				//hideLoadingBar();
+			}
+	});
+
+
+	
+}
+
+
+function weekCompare(weekDay,bizNum) {
+
+		var targetUrl = "/data/weekTimeAvg?weekDay="+weekDay+"&bizNum="+bizNum
+		$.ajax({
+				type: "GET",
+				async: true,
+				url: targetUrl,
+				dataType: "json",
+				cache: false,
+				success: function(data) {
+					line3=parseInt(data.resultData.line0003);
+					line6=parseInt(data.resultData.line0406);
+					line9=parseInt(data.resultData.line0709);
+					line12=parseInt(data.resultData.line1012);
+					line15=parseInt(data.resultData.line1315);
+					line18=parseInt(data.resultData.line1618);
+					line21=parseInt(data.resultData.line1921);
+					line24=parseInt(data.resultData.line2224);
+
+					//line06=parseInt(data.resultData.line0006);
+					//line611=parseInt(data.resultData.line0611);
+					//line1114=parseInt(data.resultData.line1114);
+					//line1417=parseInt(data.resultData.line1417);
+					//line1724=parseInt(data.resultData.line1724);
+
+					$('#weekTotal').text(addComma(data.resultData.weekTotal));
+				
+				google.charts.setOnLoadCallback(drawVisualization);
+				//google.charts.setOnLoadCallback(drawVisualization2);
+
+				},
+				error: function(xhr, status, error) {
+					//common_alert("공유 노드 할당", "관리자에게 문의 하세요");
+					//hideLoadingBar();
+				}
+		});
+
+	}
+
+</script>
+
+<!--// POPUP 업종선택 -->
+<div class="modal">
+	<div class="modal-content">
+		<div class="close-button" style="display: none;"></div>
+		<div><img src="/public/img/popup.png" style="width: 65%; height: 47%;"/></div>
+		<div style="text-align: center;" class="modal-tit"><span id="popupTitle" style="font-size: 17px;">고객 방문 분석이란?</span></div>
+		<div class="modal-background">
+			<div style="text-align: center; padding-top: 5%; padding-bottom: 10%; font-size: 12px;">
+				<span id="popupContent" style="color:#25265e;">지난달 요일별 특정 시간대 고객 방문 비율을 표시한 내용입니다.</span>
+			</div>
+			<div style="margin-left: 10%; color: #ffffff; background-color: #6739ff; font-size: 15px; border-radius:25px; height: 15%; width: 80%; display: table;" class="btn_login btn-close"><p style="vertical-align: middle; height: 100%; width: 100%; display: table-cell;">닫기</p></div>
+		</div>
+	</div>
+</div>
+<div class="trigger" style="display: none;"></div>
+
+<!--//주간 매출 분석-->
+<div class="comm_box">
+	<div class="comm_tit" id="selectWeekTitle"></div>
+	<!--<div class="comm_tit">지난주 매출 비교</div>-->
+	<!--<div class="pall10 pright15 red bl agnr">* 수집된 데이터에 따라 오차가 있을 수 있습니다.</div>-->
+	<div class="chart_column">
+		<ul class="charc_num">
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+			<li></li>
+		</ul>
+		<ul>
+			<li class="chart_column_graph">
+				<div class="gviolet1" id="min_chart" ><!--height:그래프값 / top:100-그래프값 (100기준)-->
+					<div class="chart_column_graph_txt"><span id="min_amt"></span></div>
+				</div>
+			</li>
+			<li>최저<br /><span id="min_week"></span></li>
+		</ul>
+		<ul>
+			<li class="chart_column_graph">
+				<div class="gviolet2" id="avg_chart">
+					<div class="chart_column_graph_txt"><span id="avg_amt"></span></div>
+				</div>
+			</li>
+			<li>평균</li>
+		</ul>
+		<ul>
+			<li class="chart_column_graph">
+				<div class="gviolet3" style="height:100%; top:0%;">
+					<div class="chart_column_graph_txt"><span id="max_amt"></span></div>
+				</div>
+			</li>
+			<li>최고<br /><span id="max_week"></span></li>
+		</ul>
+	</div>
+	<!--
+	<div class="custom_box_botm">
+		지난주 보다 매출이 100,000원 높네요 :) </br>
+		오늘도 화이팅하세요!
+	</div>
+	<div class="custom_box_botm">
+		매출을 90,000원만 올리면 지난주 매출을 넘을 수 있어요! :) </br>
+		오늘도 화이팅하세요!
+	</div>
+	-->
+</div>
+
+<!--지난주 취소 리스트-->
+<!--
+<div class="comm_box" id="cancleY">
+		<div class="comm_tit">지난주 취소 분석 <img src="/public/img/Artboard.png" onclick="popup(2);" style="width:6%;"/></div>
+		<div class="chart_line_top">
+			<div class="custom_box" id="chart_div1"></div>
+			<div class="custom_box">
+				<p class="custom_box_cont">결제 취소 (<span id="okCancle"></span>건)</p>
+				<p class="pbotm20">- <span>정상 결제 취소</span></p>
+				<p class="custom_box_cont">시간 취소 (<span id="timeCancle"></span>건)</p>
+				<p class="pbotm20">- <span>3시간 이후 결제 취소</span></p>
+				<p class="custom_box_cont">일 취소 (<span id="dayCancle"></span>건)</p>
+				<p class="pbotm20">- <span>1일 후 결제 취소</span></p>
+				<p class="custom_box_cont">심야 취소 (<span id="nightCancle"></span>건)</p>
+				<p class="pbotm20">- <span>0시 ~ 9시 사이에 결제 취소</span></p>
+				<p class="custom_box_cont">미 승인 취소 (<span id="noCancle"></span>건)</p>
+				<p class="pbotm20">- <span>결제 승인 없이 취소만 있는 결제</span></p>
+			</div>
+		</div>
+</div>
+-->
+<div class="comm_box" id="cancleY">
+	<div class="comm_tit">지난주 취소 분석 <img src="/public/img/Artboard.png" onclick="popup(2);" style="width:6%;"/></div>
+	<div class="chart_line_top">
+		<div class="custom_box" id="chart_div1"></div>
+		<div class="custom_box">
+
+			<table style="width: 100%;">
+				<tr>
+					<td style="width: 45%;">정상 취소</td>
+					<td style="width: 10%; color: #1b6eb4; text-align: left"><span id="okCancle"></span></td>
+					<td style="width: 40%;">3시간 이후 취소</td>
+					<td style="width: 5%; color: #1b6eb4; text-align: right"><span id="timeCancle"></span></td>
+				</tr>
+				<tr>
+					<td style="width: 45%;">1일 이후 취소</td>
+					<td style="width: 10%; color: #1b6eb4; text-align: left"><span id="dayCancle"></span></td>
+					<td style="width: 40%;">심야 시간 취소</td>
+					<td style="width: 5%; color: #1b6eb4; text-align: right"><span id="nightCancle"></span></td>
+				</tr>
+				<tr>
+					<td style="width: 45%;">승인 자료 없는 취소</td>
+					<td style="width: 10%; color: #1b6eb4; text-align: left"><span id="noCancle"></span></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+<div class="comm_inbox" id="cancleN">
+	<h3>지난주 취소 분석</h3>
+	<div>
+		<span>지난주 취소 건수가 한개도 없네요 :)</br>이번주도 달아요와 함께 화이팅하세요!!</span>
+	</div>
+</div>
+
+<!--//요일별 매출 분석-->
+<div class="comm_box">
+	<div class="comm_tit">주간 요일별 매출</div>
+	<div class="chart_line">
+		<div class="chart_line_top">
+			<select onchange="weekCompare(this.value, [[ .bizNum]])">
+				<option id="day0" value="0">일요일</option>
+				<option id="day1" value="1">월요일</option>
+				<option id="day2" value="2">화요일</option>
+				<option id="day3" value="3">수요일</option>
+				<option id="day4" value="4">목요일</option>
+				<option id="day5" value="5">금요일</option>
+				<option id="day6" value="6">토요일</option>
+			</select>
+			<span class="pleft10 bl">합계 : <span id="weekTotal"></span></span>
+		</div>
+	
+		<!--<div id="chart_div" style="width:100%; height:200px;"></div>-->
+		<div id="chart_div" style="width:100%;"></div>
+	</div>
+</div>
+
+<!--//고객님 방문 분석-->
+<div class="comm_box">
+	<div class="comm_tit"><strong>고객</strong> 방문 분석 <img src="/public/img/Artboard.png" onclick="popup(1);" style="width:6%;"/></div>
+	<div class="custom_box">
+		<ul>
+			<li class="agnc">
+				<img src="/public/img/img_custom.png" style="width:100%; height: 20%;"alt="고마운 고객님의 단골비율" />
+			</li>
+			<li class="ptopEm">
+				<!--
+				<p class="custom_box_cont">지난주 결제 건수 : <span id="visitTotal"></span>건</p>
+				<p class="custom_box_cont">평균 결제액 : <span id="personPrice"></span>원</p>
+				-->
+				<div>
+					<table style="width: 100%;">
+						<tr>
+							<td style="width: 60%;">지난주 결제 건수</td>
+							<td style="width: 40%; color: #1b6eb4; text-align: center"><span id="visitTotal">4.15</span></td>
+						</tr>
+						<tr>
+							<td style="width: 50%;">평균 결제액</td>
+							<td style="width: 50%; color: #1b6eb4; text-align: center"><span id="personPrice">153</span></td>
+						</tr>
+					</table>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<div class="chart_horiz">
+		<ul>
+			<li class="li_padding">
+				<!--<p class="custom_box_cont pbotm10 agnl">-->
+				<span id="visit1Day"></span> <span id="visit1"></span>
+				<!--<b><span id="visit1Day"></span> <span id="visit1"></span>(<span id="visit1Cnt"></span>건)</b>-->
+			</li>
+			<li >
+				<div class="chart_horiz_graph">
+					<div class="horiz_graph_v4" id="visit1Grap" style="width:33%;"></div>
+				</div>
+			</li>
+			<li class="li_padding">
+				<!--<p class="custom_box_cont pbotm10 agnl">-->
+				<span id="visit2Day"></span> <span id="visit2"></span>
+			</li>
+			<li >
+				<div class="chart_horiz_graph">
+					<div class="horiz_graph_v3" id="visit2Grap" style="width:50%;"></div>
+				</div>
+			</li>
+			<li class="li_padding">
+				<span id="visit3Day"></span> <span id="visit3"></span>
+			</li>
+			<li style="padding-bottom: 2em;">
+				<div class="chart_horiz_graph">
+					<div class="horiz_graph_v2" id="visit3Grap" style="width:75%;"></div>
+				</div>
+			</li>
+		</ul>
+		<!--<div class="chart_horiz_graph_botm">-->
+	</div>
+	<!--
+	<div class="custom_box_botm">
+		지난주 요일별 특정 시간 대 고객님 방문 비율을 표시한 내용입니다.
+	</div>
+	-->
+</div>
+
+<!--//달아요 TIP-->
+<div class="comm_inbox" style="display: none;">
+<!--
+	<h3>이번주 꼭 봐야 할 이슈!</h3>
+	<div>
+		<span>이번주 핫 키워드!</span><br />
+		<span><strong>배달의 문제점, 쿠팡이츠, 5차 재난지원금, 자영업자 시위, 키오스크</strong></span><br /><br />
+
+		<span>외식/배달 솔루션으로 똑똑하게 장사하기 '키오스크 2탄'!</span><br />
+		<span><a href="https://blog.naver.com/baecoach01/222427047248">달아요 블로그 참조</a></span>
+	</div>
+	-->
+	<h3 id="conTitle-1"></h3>
+	<div id="conBody-1"></div>
+</div>
+<!--
+<div class="comm_box" id="publicReview">
+	<div class="comm_tit">지난주 리뷰 분석 <img src="/public/img/Artboard.png" onclick="popup(5);" style="width:6%;"/></div>
+	<div class="chart_line_top">
+		<div class="custom_box" id="chart_div3"></div>
+		<div class="custom_box">
+			<p class="custom_box_cont">일반 리뷰 (<span id="okReview"></span>건)</p>
+			<p class="custom_box_cont">1점 이하 평점 리뷰 (<span id="lowReview"></span>건)</p>
+			<p class="custom_box_cont">키워드 포함 리뷰 (<span id="keywordReview"></span>건)</p>
+			<p class="pbotm20">- <span><span id="keyword"></span></span></p>
+		</div>
+	</div>
+</div>
+-->
+<div class="comm_box" id="publicReview">
+	<div class="comm_tit">사장님만 보는 <img src="/public/img/check.png" style="width:5%; vertical-align: top;"/>관심 리뷰 <img src="/public/img/Artboard.png" onclick="popup(5);" style="width:6%;"/></div>
+	<div class="chart_line_top">
+		<div class="custom_box" id="chart_div3"></div>
+
+		<div style="padding-left: 15px;">
+			<table style="width: 100%;">
+				<tr>
+					<td style="width: 50%;">모든 리뷰</td>
+					<td style="width: 50%; color: #1b6eb4; text-align: center"><span id="okReview">4.15</span></td>
+				</tr>
+				<tr>
+					<td style="width: 50%;">평점에 딱 맞는 <img src="/public/img/check2.png" style="width:6%; vertical-align: top;"/>관심 리뷰</td>
+					<td style="width: 50%; color: #1b6eb4; text-align: center"><span id="lowReview">153</span></td>
+				</tr>
+				<tr>
+					<td style="width: 50%;">키워드 포함 <img src="/public/img/check2.png" style="width:6%; vertical-align: top;"/>관심 리뷰</td>
+					<td style="width: 50%; color: #1b6eb4; text-align: center"><span id="keywordReview">153</span></td>
+				</tr>
+			</table>
+		</div>
+		<div style="padding-left: 15px;">
+			<span style="font-size: 10pt;">사장님 설정 키워드</span></br>
+			<span id="keyword" style="color: #1b6eb4; font-size: 10pt;">153</span>
+		</div>
+
+	</div>
+</div>
+<div class="comm_inbox" id="noReview">
+	<h3>사장님만 보는 <img src="/public/img/check.png" style="width:5%; vertical-align: top;"/>관심 리뷰</h3>
+	<div>
+		<span>지난주 리뷰 건수가 한개도 없어요 :( </span><p></p>
+		<span>리뷰 데이터 수집 중 오차가 있을 수 있습니다.</span>
+	</div>
+</div>
+
+<!--
+<div class="comm_box" id="badReview">
+	<div class="comm_tit">요주의 리뷰 분석 <img src="/public/img/Artboard.png" onclick="popup(6);" style="width:6%;"/></div>
+	<div class="pall10 pright15 red bl agnr">* 배달의 민족 리뷰 전용</div>
+	<div class="chart_line_top">
+		<div class="custom_box" id="chart_div4"></div>
+		<div class="custom_box">
+			<p class="custom_box_cont">신규 고객 (<span id="newCustomer"></span>건)</p>
+			<p class="pbotm20">- <span>요주의 리뷰를 작성한 신규 고객의 수</span></p>
+			<p class="custom_box_cont">신규 고객 리뷰 평점 (<span id="newCustomerTotal"></span>)</p>
+			<p class="pbotm20">- <span>다른 가맹점에서 작성한 평균 점수</span></p>
+			<p class="custom_box_cont">단골 고객 (<span id="oldCustomer"></span>건)</p>
+			<p class="pbotm20">- <span>가맹점을 3번 이상 이용하신 고객의 수</span></p>
+			<p class="custom_box_cont">단골 고객 리뷰 평점 (<span id="oldCustomerTotal"></span>)</p>
+			<p class="pbotm20">- <span>우리 가맹점에 작성한 평균 점수</span></p>
+		</div>
+	</div>
+</div>
+-->
+<div class="comm_box" id="badReview">
+	<div class="comm_tit"><img src="/public/img/check.png" style="width:5%; vertical-align: top;"/>관심 리뷰 작성자 분석 <img src="/public/img/Artboard.png" onclick="popup(6);" style="width:6%;"/></div>
+	<!--<div class="comm_tit" id="keywordTitle"></div>-->
+	<div class="pall10 pright15 red bl agnr">* 배달의 민족 리뷰 전용</div>
+	<div class="chart_line_top">
+		<div class="custom_box" id="chart_div4"></div>
+
+		<div style="padding-left: 15px;">
+			<table style="width: 100%;">
+				<tr>
+					<td style="width: 60%;"><img src="/public/img/check2.png" style="width:6%; vertical-align: top;"/>관심 리뷰를 작성한 신규고객</td>
+					<td style="width: 40%; color: #1b6eb4; text-align: center"><span id="newCustomer">4.15</span></td>
+				</tr>
+				<tr style="display: none;">
+					<td style="width: 60%;">다른 매장에서 작성한 평점</td>
+					<td style="width: 40%; color: #1b6eb4; text-align: center"><span id="newCustomerTotal">153</span></td>
+				</tr>
+				<tr style="display: none;"></tr>
+				<tr>
+					<td style="width: 60%;"><img src="/public/img/check2.png" style="width:6%; vertical-align: top;"/>관심 리뷰를 작성한 재방문고객</td>
+					<td style="width: 40%; color: #1b6eb4; text-align: center"><span id="oldCustomer">153</span></td>
+				</tr>
+				<tr style="display: none;">
+					<td style="width: 60%;">우리 매장에 작성했던 평점</td>
+					<td style="width: 40%; color: #1b6eb4; text-align: center"><span id="oldCustomerTotal">153</span></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+<div class="comm_inbox" id="partnerReview">
+	<h3><img src="/public/img/check.png" style="width:5%; vertical-align: top;"/>관심 리뷰 작성자 분석</h3>
+	<div>
+		<span>파트너 회원을 위한 분석자료입니다.</br>달아요 캐시 홈페이지에서 파트너 회원 가입해 보세요.</span>
+	</div>
+</div>
+
+<div class="comm_inbox" id="publicReview2" style="display: none;">
+	<!--
+	<h3>리뷰 분석 Tip</h3>
+	<div>
+		<span>파트너 웹에서 키워드나 평점을 설정해 보세요.</span><br>
+		<span>부정적인 키워드를 통해 민감한 리뷰를 찾아낼 수 있어요.</span><br>
+		<span>저폄점 리뷰 관리로 고객관리가 편리해 집니다.</span>
+	</div>
+	-->
+
+	<h3 id="conTitle-2"></h3>
+	<div id="conBody-2"></div>
+</div>
+
+</body>
+</html>
+
+<script type="text/javascript" src="/public/js/jquery.treemenu.js"></script><!--트리메뉴 JS-->
+<script>
+	new jQueryCollapse($(".comm_inbox"), {
+		open: function() {
+			this.slideDown(200);
+		},
+		close: function() {
+			this.slideUp(200);
+		},
+		accordion : false
+	});
+</script>
+
+<script type="text/javascript">
+
+	var modal = document.querySelector(".modal");
+	var trigger = document.querySelector(".trigger");
+	var closeButton = document.querySelector(".close-button");
+	var cancel = document.querySelector(".btn-close");
+
+	function toggleModal() {
+		modal.classList.toggle("show-modal");
+	}
+
+	function windowOnClick(event) {
+		if (event.target === modal) {
+			toggleModal();
+		}
+	}
+
+	trigger.addEventListener("click", toggleModal);
+	closeButton.addEventListener("click", toggleModal);
+	cancel.addEventListener("click", toggleModal);
+	window.addEventListener("click", windowOnClick);
+
+</script>

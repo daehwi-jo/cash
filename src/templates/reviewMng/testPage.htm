@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/public/css/font_style.css" rel="stylesheet">
+    <link href="/public/css/tw.css" rel="stylesheet">
+    <!-- ... -->
+</head>
+
+<style>
+
+    .color1 {color:#6c39ff}
+    .color2 {color:#fe6a48}
+    .color3 {color:#25265e}
+    .color4 {color:#4e4e4e}
+
+
+    body {
+        background-image: url('/public/img/bg.svg');
+        background-size: cover;
+    }
+    body {
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity .65s .15s
+    }
+    body.reveal {
+        opacity: 1;
+        overflow-y: auto
+    }
+
+    body.hidden {
+        opacity: 0
+    }
+
+    input:checked + svg {
+        display: block;
+    }
+
+</style>
+
+<script>
+
+    window.addEventListener("load", function() {
+        document.body.classList.add("reveal");
+    });
+</script>
+
+<body>
+<div class="min-h-full">
+    <main>
+
+        <div class="w-full">
+
+            <div class="w-full mx-5 py-6">
+                <h2 class="text-left text-2xl font-bold color1">
+                    매장주소
+                </h2>
+                <p class="mt-2 text-left color2 text-lg">
+                    * 내 매장의 리뷰를 분석하기 위해 정확한 주소가 필요합니다.
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <input type="text" id="addr" class="text-xl mx-5 font-bold color3 border border-gray-200  sm:text-sm rounded-xl block p-4 w-11/12" placeholder="" required="">
+            </div>
+            <div class="mb-3">
+                <input type="text" id="addr2" class="text-xl mx-5 font-bold color3  border border-gray-200 sm:text-sm rounded-xl block p-4 w-11/12 placeholder-gray-400 placeholder-opacity-50" placeholder="상세 주소 입력" required="">
+            </div>
+            <div class="w-full mx-5 mt-8">
+                <h2 class="text-left text-2xl font-bold color1">
+                    리뷰 분석 대상 매장
+                </h2>
+
+                <div class="grid grid-cols-7 items-center mt-4">
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/baemin.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold">유창분식 구로디지털점</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 text-xl  ">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3">
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/yogiyo.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold">유창분식 구로점</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center justify-between">
+                            <span class="finline-block color4 text-xl ">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3">
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/coupang.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold">유창분식 구로점</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center   justify-between">
+                            <span class="finline-block color4 text-xl ">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 items-center mt-3">
+                    <div class="col-span-1 self-center">
+                        <img src="/public/img/delivery/naver.png" class="w-full">
+                    </div>
+                    <div class="flex flex-col col-span-4 pl-6 pt-2">
+                        <span class="color3 text-xl font-bold">미등록</span>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 text-xl ">변경 하기 ></span>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="w-full mx-5 py-6 mt-8">
+                <p class="text-left text-lg color2">
+                    * 설정한 별점, 키워드가 포함된 관심리뷰를 알려드려요.
+                </p>
+                <p class="px-3 text-left font-bold text-xl color2">
+                    (파트너 전용)
+                </p>
+                <h2 class="text-left text-2xl font-bold color1 mt-5">
+                    관심 별점
+                </h2>
+                <div class="block pt-3 space-x-4">
+                    <div class="flex place-items-center">
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                <input type="checkbox" id="star1" name="starPoint" class="opacity-0 absolute">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-xl items-center mr-5">1개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                <input type="checkbox" id="star2" name="starPoint" class="opacity-0 absolute">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-xl items-center mr-5">2개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                <input type="checkbox" id="star3" name="starPoint" class="opacity-0 absolute">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-xl items-center mr-5">3개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                <input type="checkbox" id="star4" name="starPoint" class="opacity-0 absolute">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-xl items-center mr-5">4개</div>
+                        </label>
+
+                        <label class="flex justify-start items-start">
+                            <div class="bg-white border-2 rounded border-gray-400 w-7 h-7 flex flex-shrink-0 justify-center items-center mr-2 focus-within:border-gray-500">
+                                <input type="checkbox" id="star5" name="starPoint" class="opacity-0 absolute">
+                                <svg class="fill-current hidden w-5 h-5 font-bold  pointer-events-none" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+                            </div>
+                            <div class="font-bold color3 text-xl items-center mr-5">5개</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full mx-5 py-6">
+                <h2 class="text-left text-2xl font-bold color1">
+                    관심 키워드 4/5
+                </h2>
+
+                <div class="grid grid-cols-7 items-center mt-3">
+                    <div class="col-span-5 self-center mr-3">
+                        <input type="text" id="keyword" class="text-xl font-bold color3 border border-gray-200  sm:text-sm rounded-xl block w-full p-4 placeholder-gray-400 placeholder-opacity-50" placeholder="키워드 입력 (ex: 맛있어요)" required="">
+                    </div>
+
+                    <div class="col-span-2">
+                        <div class="flex items-center  justify-between">
+                            <span class="finline-block color4 ">
+                                <button class="p-4 pl-8  pr-8 text-xl bg-transparent border-2 border-purple-500 color1 text-xl rounded-2xl hover:bg-purple-500 hover:text-gray-100 focus:border-4 focus:border-purple-300">등록</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class='my-3 flex flex-wrap -m-1'>
+                    <span class="m-1 border border-purple-500 rounded-lg py-1 px-4 font-bold text-xl leading-loose " >
+                        키워드
+                        <a href="" class="ml-3 color1 text-xl">X</a>
+                    </span>
+                    <span class="m-1 border border-purple-500 rounded-lg py-1 px-4 font-bold text-xl leading-loose " >
+                        키워드
+                        <a href="" class="ml-3 color1 text-xl">X</a>
+                    </span>
+                    <span class="m-1 border border-purple-500 rounded-lg py-1 px-4 font-bold text-xl leading-loose " >
+                        키워드
+                        <a href="" class="ml-3 color1 text-xl">X</a>
+                    </span>
+                    <span class="m-1 border border-purple-500 rounded-lg py-1 px-4 font-bold text-xl leading-loose " >
+                        키워드
+                        <a href="" class="ml-3 color1 text-xl">X</a>
+                    </span>
+                    <span class="m-1 border border-purple-500 rounded-lg py-1 px-4 font-bold text-xl leading-loose " >
+                        키워드
+                        <a href="" class="ml-3 color1 text-xl">X</a>
+                    </span>
+
+
+                </div>
+
+            </div>
+
+            <div class="w-full mx-5 py-6">
+                <button class="p-5 w-11/12 bg-purple-600 text-gray-50 text-2xl rounded-full ">저장하기</button>
+            </div>
+
+
+        </div>
+    </main>
+</div>
+</body>
+</html>
